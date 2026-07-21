@@ -1,0 +1,86 @@
+package com.kline.inventorypos.core.designsystem
+
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+
+val Primary950 = Color(0xFF083344)
+val Primary900 = Color(0xFF164E63)
+val Primary800 = Color(0xFF155E75)
+val Primary700 = Color(0xFF0E7490)
+val Primary600 = Color(0xFF0891B2)
+val Primary100 = Color(0xFFCFFAFE)
+val Primary50 = Color(0xFFECFEFF)
+
+val Slate950 = Color(0xFF020617)
+val Slate900 = Color(0xFF0F172A)
+val Slate800 = Color(0xFF1E293B)
+val Slate700 = Color(0xFF334155)
+val Slate600 = Color(0xFF475569)
+val Slate500 = Color(0xFF64748B)
+val Slate400 = Color(0xFF94A3B8)
+val Slate300 = Color(0xFFCBD5E1)
+val Slate200 = Color(0xFFE2E8F0)
+val Slate100 = Color(0xFFF1F5F9)
+val Slate50 = Color(0xFFF8FAFC)
+val AppBackground = Color(0xFFEEF5F6)
+
+val MoneyGreen700 = Color(0xFF15803D)
+val MoneyGreen600 = Color(0xFF16A34A)
+val MoneyGreen100 = Color(0xFFDCFCE7)
+val MoneyGreen50 = Color(0xFFF0FDF4)
+val Amber700 = Color(0xFFB45309)
+val Amber500 = Color(0xFFF59E0B)
+val Amber100 = Color(0xFFFEF3C7)
+val Amber50 = Color(0xFFFFFBEB)
+val Error700 = Color(0xFFB91C1C)
+val Error50 = Color(0xFFFEF2F2)
+
+private val LightColors = lightColorScheme(
+    primary = Primary700,
+    onPrimary = Color.White,
+    primaryContainer = Primary100,
+    onPrimaryContainer = Primary950,
+    secondary = Slate600,
+    onSecondary = Color.White,
+    background = AppBackground,
+    onBackground = Slate900,
+    surface = Color.White,
+    onSurface = Slate900,
+    surfaceVariant = Slate100,
+    onSurfaceVariant = Slate600,
+    outline = Slate300,
+    outlineVariant = Slate200,
+    error = Color(0xFFDC2626),
+)
+
+private val DarkColors = darkColorScheme(
+    primary = Color(0xFF67E8F9),
+    onPrimary = Primary950,
+    primaryContainer = Primary800,
+    onPrimaryContainer = Color.White,
+    secondary = Slate300,
+    background = Slate950,
+    onBackground = Slate100,
+    surface = Slate900,
+    onSurface = Slate100,
+    surfaceVariant = Slate800,
+    onSurfaceVariant = Slate300,
+    outline = Slate600,
+    outlineVariant = Slate700,
+)
+
+@Composable
+fun InventoryPosTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit,
+) {
+    MaterialTheme(
+        colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = InventoryTypography,
+        content = content,
+    )
+}

@@ -1,0 +1,549 @@
+package com.kline.inventorypos.data.network
+
+import com.google.gson.annotations.SerializedName
+import com.google.gson.JsonObject
+import com.google.gson.JsonElement
+import com.kline.inventorypos.core.session.PosBranch
+import com.kline.inventorypos.core.session.PosUser
+import com.kline.inventorypos.core.session.RegisterSession
+
+data class LoginRequest(val username: String, val password: String)
+
+data class LoginResponse(
+    val success: Boolean,
+    val message: String?,
+    val token: String,
+    val user: UserDto,
+)
+
+data class CurrentUserResponse(val success: Boolean, val user: UserDto)
+
+data class ApiEnvelope<T>(
+    val success: Boolean,
+    val message: String?,
+    val data: T,
+)
+
+data class ApiError(val message: String?)
+
+data class UserDto(
+    val id: String,
+    val username: String,
+    @SerializedName("full_name") val fullName: String?,
+    @SerializedName("role_name") val roleName: String?,
+    val role: String?,
+    val permissions: List<PermissionDto>?,
+    val branches: List<BranchDto>?,
+    @SerializedName("default_branch_id") val defaultBranchId: String?,
+)
+
+data class PermissionDto(
+    @SerializedName("permission_name") val permissionName: String?,
+    val name: String?,
+)
+
+data class BranchDto(
+    val id: String,
+    val code: String?,
+    val name: String,
+    val status: String?,
+    val city: String?,
+    @SerializedName("is_default") val isDefault: Boolean?,
+    @SerializedName("is_user_default") val isUserDefault: Boolean?,
+    @SerializedName("can_switch_to") val canSwitchTo: Boolean?,
+)
+
+data class MyBranchesDto(
+    val branches: List<BranchDto>,
+    @SerializedName("default_branch_id") val defaultBranchId: String?,
+)
+
+data class OpenDrawerRequest(@SerializedName("opening_float") val openingFloat: Long)
+
+data class CashDrawerDto(
+    val id: String,
+    @SerializedName("opening_float") val openingFloat: Double?,
+    @SerializedName("opened_at") val openedAt: String?,
+    @SerializedName("running_total") val runningTotal: Double?,
+)
+
+data class CatalogVariantDto(
+    val id: String,
+    val sku: String,
+    @SerializedName("variant_attributes") val variantAttributes: Map<String, String>?,
+    val price: Double,
+    @SerializedName("quantity_in_stock") val quantityInStock: Double?,
+    @SerializedName("reorder_level") val reorderLevel: Double?,
+    val barcode: String?,
+    @SerializedName("product_id") val productId: String,
+    @SerializedName("product_name") val productName: String,
+    @SerializedName("category_id") val categoryId: String?,
+    @SerializedName("category_name") val categoryName: String?,
+    @SerializedName("brand_name") val brandName: String?,
+)
+
+data class CategoryDto(val id: String, val name: String)
+
+data class CustomerDto(
+    val id: String,
+    @SerializedName("first_name") val firstName: String?,
+    @SerializedName("last_name") val lastName: String?,
+    @SerializedName("company_name") val companyName: String?,
+    val phone: String?,
+    val email: String?,
+    @SerializedName("loyalty_points") val loyaltyPoints: Double?,
+)
+
+data class PromotionEvaluationRequest(
+    val items: List<PromotionItemRequest>,
+    val subtotal: Long,
+    @SerializedName("customer_id") val customerId: String?,
+)
+
+data class PromotionItemRequest(
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("product_id") val productId: String,
+    @SerializedName("category_id") val categoryId: String?,
+    val price: Long,
+    val quantity: Int,
+)
+
+data class PromotionEvaluationDto(
+    val applied: List<AppliedPromotionDto>?,
+    val totalSavings: Double?,
+)
+
+data class AppliedPromotionDto(
+    val name: String,
+    val savings: Double?,
+    @SerializedName("applicable_variant_ids") val applicableVariantIds: List<String>?,
+)
+
+data class HeldCartItemDto(
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("product_name") val productName: String,
+    val sku: String,
+    @SerializedName("variant_attributes") val variantAttributes: Map<String, String>,
+    val price: Long,
+    val quantity: Int,
+    @SerializedName("stock_quantity") val stockQuantity: Int,
+)
+
+data class HoldCartRequest(
+    @SerializedName("customer_id") val customerId: String?,
+    @SerializedName("cart_items") val cartItems: List<HeldCartItemDto>,
+    val notes: String?,
+)
+
+data class HeldCartDto(
+    val id: String,
+    @SerializedName("customer_id") val customerId: String?,
+    @SerializedName("customer_name") val customerName: String?,
+    @SerializedName("cart_items") val cartItems: List<HeldCartItemDto>,
+    @SerializedName("item_count") val itemCount: Int?,
+    val notes: String?,
+    @SerializedName("held_at") val heldAt: String?,
+)
+
+data class CartItemRequest(
+    @SerializedName("variant_id") val variantId: String,
+    val quantity: Int,
+)
+
+data class ValidateCartRequest(val items: List<CartItemRequest>)
+
+data class CartValidationResponse(
+    val success: Boolean,
+    val valid: Boolean,
+    val items: List<CartValidationItemDto>,
+)
+
+data class CartValidationItemDto(
+    @SerializedName("variant_id") val variantId: String,
+    val valid: Boolean,
+    val error: String?,
+    @SerializedName("available_quantity") val availableQuantity: Double?,
+)
+
+data class TaxPreviewRequest(val items: List<TaxPreviewItemRequest>)
+
+data class TaxPreviewItemRequest(
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("product_id") val productId: String,
+    @SerializedName("category_id") val categoryId: String?,
+    @SerializedName("unit_price") val unitPrice: Long,
+    val quantity: Int,
+)
+
+data class TaxPreviewDto(val items: List<TaxPreviewItemDto>, val totals: TaxPreviewTotalsDto)
+
+data class TaxPreviewItemDto(
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("tax_rate") val taxRate: Double,
+    @SerializedName("tax_type") val taxType: String?,
+)
+
+data class TaxPreviewTotalsDto(
+    val subtotal: Double,
+    val tax: Double,
+    val total: Double,
+)
+
+data class SalePaymentRequest(
+    val method: String,
+    val amount: Long,
+    val reference: String?,
+)
+
+data class DiscountDto(
+    val id: String,
+    val name: String,
+    @SerializedName("discount_type") val discountType: String,
+    val value: Double,
+    val scope: String,
+    @SerializedName("scope_id") val scopeId: String?,
+    val conditions: DiscountConditionsDto?,
+    @SerializedName("requires_approval") val requiresApproval: Boolean,
+    @SerializedName("approval_threshold") val approvalThreshold: Double?,
+    @SerializedName("max_uses") val maxUses: Int?,
+    @SerializedName("current_uses") val currentUses: Int?,
+)
+
+data class DiscountConditionsDto(
+    @SerializedName("min_spend") val minimumSpend: Double?,
+    @SerializedName("min_quantity") val minimumQuantity: Int?,
+)
+
+data class InventorySummaryDto(
+    @SerializedName("total_products") val totalProducts: Int,
+    @SerializedName("total_variants") val totalVariants: Int,
+    @SerializedName("total_stock_units") val totalStockUnits: Int,
+    @SerializedName("low_stock_count") val lowStockCount: Int,
+    @SerializedName("out_of_stock_count") val outOfStockCount: Int,
+    @SerializedName("total_inventory_value") val totalInventoryValue: Double,
+    @SerializedName("dead_stock_count") val deadStockCount: Int,
+    @SerializedName("stale_price_count") val stalePriceCount: Int,
+)
+
+data class StockMovementDto(
+    val id: String,
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("product_name") val productName: String?,
+    val sku: String,
+    @SerializedName("movement_type") val movementType: String,
+    @SerializedName("quantity_change") val quantityChange: Int,
+    @SerializedName("previous_quantity") val previousQuantity: Int,
+    @SerializedName("new_quantity") val newQuantity: Int,
+    val reason: String?,
+    @SerializedName("reference_id") val referenceId: String?,
+    @SerializedName("performed_by_name") val performedByName: String?,
+    @SerializedName("created_at") val createdAt: String,
+)
+
+data class PaginationDto(val total: Int, val limit: Int, val offset: Int)
+
+data class StockMovementsResponse(
+    val success: Boolean,
+    val data: List<StockMovementDto>,
+    val pagination: PaginationDto,
+)
+
+data class StockAdjustmentRequest(
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("quantity_change") val quantityChange: Int,
+    val reason: String,
+    @SerializedName("movement_type") val movementType: String = "adjustment",
+)
+
+data class BulkStockAdjustmentRequest(
+    val adjustments: List<BulkStockAdjustmentItemRequest>,
+    val reason: String,
+    @SerializedName("movement_type") val movementType: String = "purchase",
+    @SerializedName("supplier_id") val supplierId: String?,
+)
+
+data class BulkStockAdjustmentItemRequest(
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("quantity_change") val quantityChange: Int,
+    @SerializedName("cost_price") val costPrice: Long?,
+)
+
+data class InventoryMutationResponseDto(
+    val success: Boolean,
+    val status: String?,
+    val message: String?,
+    @SerializedName("grn_reference") val grnReference: String?,
+    val data: JsonElement?,
+)
+
+data class SupplierDto(
+    val id: String,
+    val name: String,
+    val phone: String?,
+    @SerializedName("is_active") val isActive: Boolean?,
+)
+
+data class PricingVariantDto(
+    val id: String,
+    val sku: String,
+    @SerializedName("variant_attributes") val variantAttributes: Map<String, String>?,
+    val price: Double,
+    @SerializedName("cost_price") val costPrice: Double?,
+    @SerializedName("stock_quantity") val stockQuantity: Double,
+    @SerializedName("product_name") val productName: String,
+    @SerializedName("category_name") val categoryName: String?,
+)
+
+data class PriceHistoryEntryDto(
+    val id: String,
+    val sku: String,
+    @SerializedName("product_name") val productName: String,
+    @SerializedName("old_price") val oldPrice: Double,
+    @SerializedName("new_price") val newPrice: Double,
+    val reason: String?,
+    @SerializedName("changed_by_name") val changedByName: String?,
+    @SerializedName("changed_by_username") val changedByUsername: String?,
+    @SerializedName("created_at") val createdAt: String,
+)
+
+data class PriceUpdateRequest(val variantId: String, val newPrice: Long)
+
+data class BulkPriceUpdateRequest(
+    val updates: List<PriceUpdateRequest>,
+    val reason: String,
+    val effectiveDate: String,
+)
+
+data class LabelPrintRunItemRequest(val variantId: String, val copies: Int)
+
+data class LabelPrintRunRequest(
+    val items: List<LabelPrintRunItemRequest>,
+    val note: String? = null,
+)
+
+data class LabelPrintRunDto(
+    val id: String,
+    val printedAt: String,
+    val totalCopies: Int,
+)
+
+data class StockTransferDto(
+    val id: String,
+    @SerializedName("transfer_number") val transferNumber: String,
+    @SerializedName("from_branch_id") val fromBranchId: String,
+    @SerializedName("to_branch_id") val toBranchId: String,
+    val status: String,
+    val notes: String?,
+    @SerializedName("from_branch_name") val fromBranchName: String,
+    @SerializedName("to_branch_name") val toBranchName: String,
+    @SerializedName("requested_by_name") val requestedByName: String?,
+    @SerializedName("requested_at") val requestedAt: String,
+    @SerializedName("item_count") val itemCount: Int?,
+)
+
+data class StockTransfersResponse(
+    val success: Boolean,
+    val data: List<StockTransferDto>,
+    val pagination: PaginationDto,
+)
+
+data class CreateStockTransferRequest(
+    @SerializedName("to_branch_id") val toBranchId: String,
+    val notes: String?,
+    val items: List<CreateStockTransferItemRequest>,
+)
+
+data class CreateStockTransferItemRequest(
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("requested_quantity") val requestedQuantity: Int,
+)
+
+data class ReceiveDraftItemDto(
+    @SerializedName("variant_id") val variantId: String,
+    val sku: String?,
+    @SerializedName("product_name") val productName: String?,
+    @SerializedName("variant_attributes") val variantAttributes: Map<String, String>?,
+    val quantity: Int,
+    @SerializedName("cost_price") val costPrice: Double?,
+)
+
+data class ReceiveStockDraftDto(
+    val id: String,
+    @SerializedName("supplier_id") val supplierId: String?,
+    @SerializedName("supplier_name") val supplierName: String?,
+    val items: List<ReceiveDraftItemDto>?,
+    val notes: String?,
+    @SerializedName("updated_at") val updatedAt: String,
+)
+
+data class SaveReceiveStockDraftRequest(
+    @SerializedName("supplier_id") val supplierId: String?,
+    @SerializedName("grn_reference") val grnReference: String? = null,
+    val items: List<ReceiveDraftItemDto>,
+    val notes: String?,
+    @SerializedName("is_partial") val isPartial: Boolean = false,
+)
+
+data class GrnSummaryDto(
+    @SerializedName("grn_reference") val grnReference: String,
+    @SerializedName("received_at") val receivedAt: String,
+    @SerializedName("supplier_name") val supplierName: String?,
+    @SerializedName("received_by") val receivedBy: String?,
+    @SerializedName("item_count") val itemCount: Int,
+    @SerializedName("total_units") val totalUnits: Int,
+)
+
+data class GrnListResponse(
+    val success: Boolean,
+    val data: List<GrnSummaryDto>,
+    val total: Int,
+)
+
+data class GrnLineDto(
+    @SerializedName("movement_id") val movementId: String,
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("quantity_change") val quantityChange: Int,
+    @SerializedName("previous_quantity") val previousQuantity: Int,
+    @SerializedName("new_quantity") val newQuantity: Int,
+    val sku: String,
+    @SerializedName("variant_attributes") val variantAttributes: Map<String, String>?,
+    @SerializedName("current_cost_price") val currentCostPrice: Double?,
+    @SerializedName("product_name") val productName: String,
+)
+
+data class CreateSaleRequest(
+    @SerializedName("customer_id") val customerId: String?,
+    val items: List<CartItemRequest>,
+    val payments: List<SalePaymentRequest>,
+    @SerializedName("payment_method") val paymentMethod: String,
+    @SerializedName("amount_paid") val amountPaid: Long,
+    @SerializedName("discount_amount") val discountAmount: Long = 0,
+    @SerializedName("discount_id") val discountId: String? = null,
+    @SerializedName("payment_reference") val paymentReference: String?,
+    @SerializedName("confirm_oversell") val confirmOversell: Boolean = false,
+)
+
+data class SaleMutationResponseDto(
+    val success: Boolean,
+    val status: String?,
+    val message: String?,
+    val data: JsonObject,
+)
+
+data class SaleDto(
+    val id: String,
+    @SerializedName("receipt_number") val receiptNumber: String,
+    @SerializedName("sale_date") val saleDate: String?,
+    @SerializedName("created_at") val createdAt: String?,
+    val subtotal: Double,
+    @SerializedName("discount_amount") val discountAmount: Double,
+    @SerializedName("tax_amount") val taxAmount: Double,
+    @SerializedName("total_amount") val totalAmount: Double,
+    @SerializedName("amount_paid") val amountPaid: Double,
+    @SerializedName("change_amount") val changeAmount: Double,
+    val items: List<SaleItemDto>?,
+)
+
+data class SaleItemDto(
+    @SerializedName("product_name") val productName: String,
+    @SerializedName("variant_attributes") val variantAttributes: Map<String, String>?,
+    val sku: String,
+    @SerializedName("unit_price") val unitPrice: Double,
+    val quantity: Int,
+    @SerializedName("line_total") val lineTotal: Double,
+)
+
+data class SaleHistoryDto(
+    val id: String,
+    @SerializedName("receipt_number") val receiptNumber: String,
+    @SerializedName("customer_first_name") val customerFirstName: String?,
+    @SerializedName("customer_last_name") val customerLastName: String?,
+    @SerializedName("total_amount") val totalAmount: Double,
+    @SerializedName("payment_method") val paymentMethod: String,
+    val status: String,
+    @SerializedName("sale_date") val saleDate: String,
+    @SerializedName("processed_by_name") val processedByName: String?,
+    @SerializedName("staff_name") val staffName: String?,
+    @SerializedName("item_count") val itemCount: Int?,
+    @SerializedName("return_status") val returnStatus: String?,
+    @SerializedName("total_returned") val totalReturned: Double?,
+)
+
+data class SalesPaginationDto(
+    val total: Int,
+    val page: Int,
+    val limit: Int,
+    val totalPages: Int,
+)
+
+data class SalesListResponse(
+    val success: Boolean,
+    val data: List<SaleHistoryDto>,
+    val pagination: SalesPaginationDto,
+)
+
+data class PendingApprovalDto(
+    @SerializedName("approval_request_id") val approvalRequestId: String,
+)
+
+data class ReceiptDto(
+    val receiptNumber: String,
+    val saleId: String,
+    val date: String,
+    val customer: ReceiptCustomerDto?,
+    val items: List<ReceiptItemDto>,
+    val subtotal: Double,
+    val discountAmount: Double,
+    val taxAmount: Double,
+    val totalAmount: Double,
+    val amountPaid: Double,
+    val changeAmount: Double,
+    val payments: List<ReceiptPaymentDto>,
+    val processedBy: String,
+)
+
+data class ReceiptCustomerDto(val id: String, val name: String, val email: String?, val phone: String?)
+
+data class ReceiptItemDto(
+    val productName: String,
+    val variantAttributes: Map<String, String>?,
+    val sku: String,
+    val unitPrice: Double,
+    val quantity: Int,
+    val lineTotal: Double,
+)
+
+data class ReceiptPaymentDto(val method: String, val amount: Double, val reference: String?)
+
+data class EmailReceiptRequest(
+    val email: String,
+    val saveToCustomer: Boolean = false,
+    val customerId: String? = null,
+    val customerName: String? = null,
+)
+
+fun UserDto.toDomain(): PosUser = PosUser(
+    id = id,
+    username = username,
+    fullName = fullName?.takeIf(String::isNotBlank) ?: username,
+    roleName = roleName ?: role ?: "Team member",
+    permissions = permissions.orEmpty().mapNotNull { it.permissionName ?: it.name }.toSet(),
+)
+
+fun BranchDto.toDomain(): PosBranch = PosBranch(
+    id = id,
+    code = code.orEmpty(),
+    name = name,
+    status = status ?: "active",
+    city = city,
+    isDefault = isDefault == true,
+    isUserDefault = isUserDefault == true,
+    canSwitchTo = canSwitchTo != false,
+)
+
+fun CashDrawerDto.toDomain(): RegisterSession = RegisterSession(
+    id = id,
+    openingFloat = openingFloat?.toLong() ?: 0L,
+    openedAt = openedAt.orEmpty(),
+    runningTotal = runningTotal?.toLong(),
+)

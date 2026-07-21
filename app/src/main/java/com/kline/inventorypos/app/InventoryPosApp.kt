@@ -1,0 +1,391 @@
+package com.kline.inventorypos.app
+
+import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.ui.NavDisplay
+import com.kline.inventorypos.MainActivity
+import com.kline.inventorypos.core.session.PosSession
+import com.kline.inventorypos.feature.activity.ActivityScreen
+import com.kline.inventorypos.feature.activity.ActivityViewModel
+import com.kline.inventorypos.feature.auth.BranchSelectionScreen
+import com.kline.inventorypos.feature.auth.LoginScreen
+import com.kline.inventorypos.feature.auth.OpenRegisterScreen
+import com.kline.inventorypos.feature.auth.RestoringSessionScreen
+import com.kline.inventorypos.feature.home.HomeScreen
+import com.kline.inventorypos.feature.inventory.InventoryScreen
+import com.kline.inventorypos.feature.inventory.InventoryViewModel
+import com.kline.inventorypos.feature.inventory.LabelPrintScreen
+import com.kline.inventorypos.feature.inventory.PriceManagementScreen
+import com.kline.inventorypos.feature.inventory.ReceiveStockScreen
+import com.kline.inventorypos.feature.inventory.TransferStockScreen
+import com.kline.inventorypos.feature.more.MoreScreen
+import com.kline.inventorypos.feature.pos.CheckoutPaymentScreen
+import com.kline.inventorypos.feature.pos.ConfirmedReceiptScreen
+import com.kline.inventorypos.feature.pos.PersistentCartScreen
+import com.kline.inventorypos.feature.pos.SaleCatalogScreen
+import com.kline.inventorypos.feature.pos.SaleViewModel
+import kotlinx.coroutines.launch
+
+private data class TopDestination(
+    val route: Any,
+    val label: String,
+    val icon: ImageVector,
+    val permission: String? = null,
+)
+
+private val Destinations = listOf(
+    TopDestination(HomeRoute, "Home", Icons.Outlined.Dashboard),
+    TopDestination(ActivityRoute, "Activity", Icons.AutoMirrored.Outlined.ReceiptLong, "sales.view"),
+    TopDestination(SellRoute, "Sell", Icons.Filled.PointOfSale, "sales.create"),
+    TopDestination(InventoryRoute, "Stock", Icons.Outlined.Inventory2, "inventory.view"),
+    TopDestination(MoreRoute, "More", Icons.Outlined.GridView),
+)
+
+@Composable
+fun InventoryPosApp(
+    viewModel: AppViewModel,
+    saleViewModel: SaleViewModel,
+    inventoryViewModel: InventoryViewModel,
+    activityViewModel: ActivityViewModel,
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    when (val stage = uiState.stage) {
+        SessionStage.Restoring -> RestoringSessionScreen()
+        SessionStage.SignedOut -> LoginScreen(
+            working = uiState.working,
+            error = uiState.error,
+            onLogin = viewModel::login,
+            onDemo = viewModel::startDemo,
+            onClearError = viewModel::clearError,
+        )
+        is SessionStage.ChooseBranch -> BranchSelectionScreen(
+            context = stage.context,
+            working = uiState.working,
+            error = uiState.error,
+            onSelect = viewModel::chooseBranch,
+            onLogout = viewModel::logout,
+        )
+        is SessionStage.OpenRegister -> OpenRegisterScreen(
+            branch = stage.branch,
+            working = uiState.working,
+            error = uiState.error,
+            onOpen = viewModel::openRegister,
+            onSkip = viewModel::continueWithoutRegister,
+            onBack = viewModel::changeBranch,
+        )
+        is SessionStage.Ready -> AuthenticatedApp(
+            session = stage.session,
+            saleViewModel = saleViewModel,
+            inventoryViewModel = inventoryViewModel,
+            activityViewModel = activityViewModel,
+            onChangeBranch = viewModel::changeBranch,
+            onOpenRegister = viewModel::requestRegister,
+            onLogout = viewModel::logout,
+        )
+    }
+}
+
+@Composable
+private fun AuthenticatedApp(
+    session: PosSession,
+    saleViewModel: SaleViewModel,
+    inventoryViewModel: InventoryViewModel,
+    activityViewModel: ActivityViewModel,
+    onChangeBranch: () -> Unit,
+    onOpenRegister: () -> Unit,
+    onLogout: () -> Unit,
+) {
+    val activity = LocalActivity.current as? MainActivity
+    val saleState by saleViewModel.uiState.collectAsStateWithLifecycle()
+    val inventoryState by inventoryViewModel.uiState.collectAsStateWithLifecycle()
+    val activityState by activityViewModel.uiState.collectAsStateWithLifecycle()
+    val latestSaleState = rememberUpdatedState(saleState)
+    val backStack = remember { mutableStateListOf<Any>(HomeRoute) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val currentRoute = backStack.lastOrNull() ?: HomeRoute
+    val showBottomBar = currentRoute in TopLevelRoutes
+    val destinations = Destinations.filter { destination ->
+        destination.permission == null || session.user.hasPermission(destination.permission)
+    }
+
+    fun message(text: String) {
+        scope.launch { snackbarHostState.showSnackbar(text) }
+    }
+
+    fun selectTopLevel(route: Any) {
+        if (route == SellRoute && session.register == null) {
+            message("Open a register before starting a sale")
+            onOpenRegister()
+            return
+        }
+        if (backStack.lastOrNull() == route) return
+        backStack.clear()
+        backStack.add(route)
+    }
+
+    LaunchedEffect(session.user.id, session.branch.id) { saleViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id) { inventoryViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id) { activityViewModel.bindSession(session) }
+    LaunchedEffect(saleState.message) {
+        saleState.message?.let { message(it); saleViewModel.consumeMessage() }
+    }
+    LaunchedEffect(saleState.error) {
+        saleState.error?.let { message(it); saleViewModel.clearError() }
+    }
+    LaunchedEffect(saleState.receipt?.saleId) {
+        if (saleState.receipt != null && backStack.lastOrNull() != ReceiptRoute) {
+            backStack.add(ReceiptRoute)
+        }
+    }
+    LaunchedEffect(inventoryState.message) {
+        inventoryState.message?.let { message(it); inventoryViewModel.consumeMessage() }
+    }
+    LaunchedEffect(inventoryState.error) {
+        inventoryState.error?.let { message(it); inventoryViewModel.clearError() }
+    }
+    LaunchedEffect(activityState.message) {
+        activityState.message?.let { message(it); activityViewModel.consumeMessage() }
+    }
+    LaunchedEffect(activityState.error) {
+        activityState.error?.let { message(it); activityViewModel.clearError() }
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                    destinations.forEach { destination ->
+                        NavigationBarItem(
+                            selected = currentRoute == destination.route,
+                            onClick = { selectTopLevel(destination.route) },
+                            icon = { Icon(destination.icon, contentDescription = null) },
+                            label = { Text(destination.label) },
+                        )
+                    }
+                }
+            }
+        },
+    ) { contentPadding ->
+        NavDisplay(
+            backStack = backStack,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
+            onBack = {
+                if (backStack.size > 1) backStack.removeLastOrNull() else activity?.finish()
+            },
+            entryProvider = { key ->
+                when (key) {
+                    HomeRoute -> NavEntry(key) {
+                        HomeScreen(
+                            session = session,
+                            onNewSale = { selectTopLevel(SellRoute) },
+                            onStock = { selectTopLevel(InventoryRoute) },
+                            onActivity = { selectTopLevel(ActivityRoute) },
+                            onMessage = ::message,
+                        )
+                    }
+                    ActivityRoute -> NavEntry(key) {
+                        ActivityScreen(
+                            state = activityState,
+                            onQueryChange = activityViewModel::setQuery,
+                            onFilterChange = activityViewModel::setFilter,
+                            onRefresh = activityViewModel::refresh,
+                            onOpenSale = activityViewModel::openSale,
+                            onCloseSale = activityViewModel::closeSale,
+                            onPrint = { receipt -> activity?.printReceipt(receipt) },
+                            onEmail = activityViewModel::emailReceipt,
+                        )
+                    }
+                    SellRoute -> NavEntry(key) {
+                        val currentSale = latestSaleState.value
+                        SaleCatalogScreen(
+                            products = currentSale.products,
+                            categories = currentSale.categories,
+                            query = currentSale.query,
+                            selectedCategoryId = currentSale.categoryId,
+                            freshness = currentSale.freshness,
+                            cartItemCount = currentSale.cart.sumOf { it.quantity },
+                            cartTotal = currentSale.cart.sumOf { it.lineTotal } - currentSale.promotions.sumOf { it.savings },
+                            onQueryChange = saleViewModel::setQuery,
+                            onCategoryChange = saleViewModel::setCategory,
+                            onScan = {
+                                activity?.scanBarcode(saleViewModel::scan, saleViewModel::scannerFailed)
+                                    ?: saleViewModel.scannerFailed("Barcode scanner is unavailable.")
+                            },
+                            onRefresh = saleViewModel::refreshCatalog,
+                            onAddProduct = saleViewModel::addProduct,
+                            onOpenCart = { backStack.add(CartRoute) },
+                        )
+                    }
+                    InventoryRoute -> NavEntry(key) {
+                        InventoryScreen(
+                            branchName = session.branch.name,
+                            state = inventoryState,
+                            onReceiveStock = { backStack.add(ReceiveStockRoute) },
+                            onTransferStock = { backStack.add(TransferStockRoute) },
+                            onManagePrices = { backStack.add(PriceManagementRoute) },
+                            onPrintLabels = { backStack.add(LabelPrintRoute) },
+                            onRefresh = inventoryViewModel::refresh,
+                            onScan = { onResult ->
+                                activity?.scanBarcode(onResult, ::message)
+                                    ?: message("Barcode scanner is unavailable")
+                            },
+                            onAdjust = inventoryViewModel::adjust,
+                            onLoadGrn = inventoryViewModel::loadGrn,
+                            onMessage = ::message,
+                        )
+                    }
+                    MoreRoute -> NavEntry(key) {
+                        MoreScreen(
+                            session = session,
+                            onChangeBranch = onChangeBranch,
+                            onLogout = onLogout,
+                            onMessage = ::message,
+                        )
+                    }
+                    CartRoute -> NavEntry(key) {
+                        val currentSale = latestSaleState.value
+                        PersistentCartScreen(
+                            lines = currentSale.cart,
+                            customer = currentSale.customer,
+                            customerResults = currentSale.customerResults,
+                            promotions = currentSale.promotions,
+                            discountOptions = currentSale.discountOptions,
+                            appliedDiscount = currentSale.appliedDiscount,
+                            heldCarts = currentSale.heldCarts,
+                            working = currentSale.working,
+                            onBack = { backStack.removeLastOrNull() },
+                            onIncrease = saleViewModel::increase,
+                            onDecrease = saleViewModel::decrease,
+                            onSearchCustomers = saleViewModel::searchCustomers,
+                            onAttachCustomer = saleViewModel::attachCustomer,
+                            onApplyDiscount = saleViewModel::applyDiscount,
+                            onRemoveDiscount = saleViewModel::removeDiscount,
+                            onHold = saleViewModel::holdSale,
+                            onRecall = saleViewModel::recallHeld,
+                            onDeleteHeld = saleViewModel::removeHeld,
+                            onPayment = { if (latestSaleState.value.cart.isNotEmpty()) backStack.add(PaymentRoute) },
+                        )
+                    }
+                    PaymentRoute -> NavEntry(key) {
+                        val currentSale = latestSaleState.value
+                        CheckoutPaymentScreen(
+                            quote = currentSale.checkoutQuote,
+                            lines = currentSale.cart,
+                            customer = currentSale.customer,
+                            working = currentSale.checkoutWorking,
+                            attempt = currentSale.checkoutAttempt,
+                            onBack = { backStack.removeLastOrNull() },
+                            onPrepare = saleViewModel::prepareCheckout,
+                            onSubmit = saleViewModel::submitCheckout,
+                            onAcknowledgeUncertain = saleViewModel::acknowledgeUncertainCheckout,
+                        )
+                    }
+                    ReceiptRoute -> NavEntry(key) {
+                        val currentSale = latestSaleState.value
+                        currentSale.receipt?.let { receipt ->
+                            ConfirmedReceiptScreen(
+                                receipt = receipt,
+                                working = currentSale.working,
+                                onPrint = { activity?.printReceipt(receipt) },
+                                onEmail = saleViewModel::emailReceipt,
+                                onNewSale = {
+                                    saleViewModel.startNewSale()
+                                    selectTopLevel(SellRoute)
+                                },
+                            )
+                        }
+                    }
+                    ReceiveStockRoute -> NavEntry(key) {
+                        ReceiveStockScreen(
+                            products = inventoryState.products,
+                            suppliers = inventoryState.suppliers,
+                            draft = inventoryState.receiveDraft,
+                            working = inventoryState.working,
+                            receiveResult = inventoryState.receiveResult,
+                            onBack = { backStack.removeLastOrNull() },
+                            onSubmit = inventoryViewModel::receive,
+                            onSaveDraft = inventoryViewModel::saveReceiveDraft,
+                            onDeleteDraft = inventoryViewModel::deleteReceiveDraft,
+                            onComplete = {
+                                inventoryViewModel.consumeReceiveResult()
+                                backStack.removeLastOrNull()
+                            },
+                            onScan = { onResult ->
+                                activity?.scanBarcode(onResult, ::message)
+                                    ?: message("Barcode scanner is unavailable")
+                            },
+                            onMessage = ::message,
+                        )
+                    }
+                    TransferStockRoute -> NavEntry(key) {
+                        TransferStockScreen(
+                            currentBranchId = session.branch.id,
+                            products = inventoryState.products,
+                            destinations = inventoryState.destinationBranches,
+                            transfers = inventoryState.transfers,
+                            working = inventoryState.working,
+                            onBack = { backStack.removeLastOrNull() },
+                            onCreate = inventoryViewModel::createTransfer,
+                            onTransition = inventoryViewModel::transitionTransfer,
+                        )
+                    }
+                    PriceManagementRoute -> NavEntry(key) {
+                        PriceManagementScreen(
+                            state = inventoryState,
+                            onBack = { backStack.removeLastOrNull() },
+                            onLoad = { inventoryViewModel.loadPricing() },
+                            onUpdate = inventoryViewModel::updatePrice,
+                        )
+                    }
+                    LabelPrintRoute -> NavEntry(key) {
+                        LabelPrintScreen(
+                            products = inventoryState.products,
+                            onBack = { backStack.removeLastOrNull() },
+                            onPrint = { items ->
+                                if (activity == null) {
+                                    message("Android printing is unavailable")
+                                } else {
+                                    activity.printLabels(items) { inventoryViewModel.recordLabelPrint(items) }
+                                }
+                            },
+                        )
+                    }
+                    else -> error("Unknown navigation key: $key")
+                }
+            },
+        )
+    }
+}
