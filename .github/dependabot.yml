@@ -6,10 +6,10 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     ignore:
-      - dependency-name: "com.android.tools.build:gradle"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "org.jetbrains.kotlin:*"
-        versions: [">= 2.4.0"]
+      - dependency-name: "com.android.application"
+        versions: [">= 9.0.0"]
+      - dependency-name: "gradle-wrapper"
+        versions: [">= 9.0.0"]
       - dependency-name: "androidx.core:*"
         versions: [">= 1.19.0"]
       - dependency-name: "androidx.lifecycle:*"

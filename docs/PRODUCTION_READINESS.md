@@ -84,10 +84,11 @@ in the release record.
 
 The project intentionally remains on the Android API 36 / Android Gradle
 Plugin 8.13 compatibility line. AndroidX Core 1.19 and Lifecycle 2.11 require
-API 37-era tooling, while Kotlin 2.4 and AGP 9 require a coordinated build
-migration. Dependabot excludes those incompatible major lines so security and
-compatible updates remain independently reviewable instead of arriving in one
-unverifiable bundle.
+API 37-era tooling, while AGP 9 and Gradle 9 require a coordinated build
+migration. Kotlin 2.4.10 and kotlinx-serialization 1.11.0 were independently
+verified across the full CI matrix. Dependabot excludes the incompatible
+tooling lines so security and compatible updates remain independently
+reviewable instead of arriving in one unverifiable bundle.
 
 ## Production exit criteria
 
