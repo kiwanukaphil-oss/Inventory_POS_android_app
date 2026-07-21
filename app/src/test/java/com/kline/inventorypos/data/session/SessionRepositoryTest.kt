@@ -18,6 +18,15 @@ import com.kline.inventorypos.data.network.ExchangePreviewRequest
 import com.kline.inventorypos.data.network.ExchangePreviewDto
 import com.kline.inventorypos.data.network.EmailReceiptRequest
 import com.kline.inventorypos.data.network.CustomerDto
+import com.kline.inventorypos.data.network.CustomerListResponse
+import com.kline.inventorypos.data.network.CustomerPurchaseHistoryDto
+import com.kline.inventorypos.data.network.CustomerAgingDto
+import com.kline.inventorypos.data.network.CustomerLedgerEntryDto
+import com.kline.inventorypos.data.network.CustomerNoteDto
+import com.kline.inventorypos.data.network.CustomerContactDto
+import com.kline.inventorypos.data.network.CreateCustomerNoteRequest
+import com.kline.inventorypos.data.network.LoyaltyEntryDto
+import com.kline.inventorypos.data.network.StoreCreditSummaryDto
 import com.kline.inventorypos.data.network.DiscountDto
 import com.kline.inventorypos.data.network.HeldCartDto
 import com.kline.inventorypos.data.network.HoldCartRequest
@@ -101,6 +110,16 @@ private object NoNetworkApi : InventoryPosApi {
     override suspend fun variantByBarcode(barcode: String): ApiEnvelope<CatalogVariantDto> = error("Network should not be used")
     override suspend fun categories(): ApiEnvelope<List<CategoryDto>> = error("Network should not be used")
     override suspend fun searchCustomers(query: String): ApiEnvelope<List<CustomerDto>> = error("Network should not be used")
+    override suspend fun customers(search: String?, view: String, sort: String, page: Int, limit: Int): CustomerListResponse = error("Network should not be used")
+    override suspend fun customer(id: String): ApiEnvelope<CustomerDto> = error("Network should not be used")
+    override suspend fun customerPurchases(id: String, limit: Int): ApiEnvelope<CustomerPurchaseHistoryDto> = error("Network should not be used")
+    override suspend fun customerAging(id: String): ApiEnvelope<CustomerAgingDto> = error("Network should not be used")
+    override suspend fun customerLedger(id: String, filter: String, limit: Int): ApiEnvelope<List<CustomerLedgerEntryDto>> = error("Network should not be used")
+    override suspend fun customerNotes(id: String): ApiEnvelope<List<CustomerNoteDto>> = error("Network should not be used")
+    override suspend fun createCustomerNote(id: String, request: CreateCustomerNoteRequest): ApiEnvelope<CustomerNoteDto> = error("Network should not be used")
+    override suspend fun customerContacts(id: String): ApiEnvelope<List<CustomerContactDto>> = error("Network should not be used")
+    override suspend fun customerLoyalty(id: String, limit: Int): ApiEnvelope<List<LoyaltyEntryDto>> = error("Network should not be used")
+    override suspend fun customerStoreCredit(id: String): ApiEnvelope<StoreCreditSummaryDto> = error("Network should not be used")
     override suspend fun evaluatePromotions(request: PromotionEvaluationRequest): ApiEnvelope<PromotionEvaluationDto> = error("Network should not be used")
     override suspend fun discounts(activeOnly: Boolean): ApiEnvelope<List<DiscountDto>> = error("Network should not be used")
     override suspend fun heldCarts(): ApiEnvelope<List<HeldCartDto>> = error("Network should not be used")

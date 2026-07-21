@@ -44,6 +44,8 @@ the Android system print service.
 Phase 5 now includes a branch-scoped Activity workspace for receipt search,
 sale detail, attribution, reprinting, receipt email, and guided return/exchange
 workflows with server-authoritative values and financial retry safeguards.
+The More workspace now opens mobile customer accounts with contacts, purchase
+history, balances, aging, statements, loyalty activity, and internal notes.
 
 To connect a debug build to a backend running on this computer over USB:
 

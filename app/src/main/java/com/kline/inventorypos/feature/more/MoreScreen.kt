@@ -58,6 +58,7 @@ fun MoreScreen(
     onChangeBranch: () -> Unit,
     onLogout: () -> Unit,
     onMessage: (String) -> Unit,
+    onCustomers: () -> Unit,
 ) {
     val groups = listOf(
         "Customers & growth" to listOf(
@@ -92,7 +93,10 @@ fun MoreScreen(
                             color = Slate500,
                         )
                         items.forEachIndexed { index, item ->
-                            MenuRow(item) { onMessage("${item.title} opens as a permission-aware workspace") }
+                            MenuRow(item) {
+                                if (item.title == "Customers") onCustomers()
+                                else onMessage("${item.title} opens as a permission-aware workspace")
+                            }
                             if (index != items.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 56.dp).background(Slate100).size(height = 1.dp, width = 340.dp))
                         }
                     }

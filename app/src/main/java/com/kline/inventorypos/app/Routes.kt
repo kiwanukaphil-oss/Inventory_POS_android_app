@@ -11,6 +11,7 @@ data object PaymentRoute
 data object ReceiptRoute
 data object ReturnSaleRoute
 data object ExchangeSaleRoute
+data object CustomersRoute
 data object ReceiveStockRoute
 data object TransferStockRoute
 data object PriceManagementRoute

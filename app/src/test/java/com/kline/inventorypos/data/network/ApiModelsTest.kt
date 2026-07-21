@@ -93,4 +93,48 @@ class ApiModelsTest {
         assertTrue(json.contains("\"settlement_method\":\"mtn_mobile_money\""))
         assertTrue(json.contains("\"new_items\""))
     }
+
+    @Test
+    fun customerAccountResponseParsesBalancesAndRelationshipMetadata() {
+        val json = """{
+            "success":true,
+            "data":[{
+                "id":"c1","first_name":"Amina","last_name":"Nakato",
+                "phone":"+256700000001","email":"amina@example.com",
+                "customer_type":"individual","total_purchases":14,"total_spent":3420000,
+                "credit_balance":180000,"credit_limit":500000,"prepaid_balance":240000,
+                "loyalty_points":1240,"last_purchase_date":"2026-07-16T10:00:00Z",
+                "tier":{"id":"gold","name":"Gold"},
+                "segment":{"segment":"vip","label":"VIP"},"tags":["Tailoring"]
+            }],
+            "pagination":{"total":1,"page":1,"limit":50,"totalPages":1}
+        }"""
+
+        val customer = Gson().fromJson(json, CustomerListResponse::class.java).data.single()
+
+        assertEquals(14, customer.totalPurchases)
+        assertEquals(180000.0, customer.creditBalance)
+        assertEquals("Gold", customer.tier?.name)
+        assertEquals("VIP", customer.segment?.label)
+    }
+
+    @Test
+    fun customerPurchaseHistoryParsesServerNestedDataShape() {
+        val json = """{
+            "success":true,
+            "data":{"data":[{
+                "id":"s1","receipt_number":"KLM-42","total_amount":620000,
+                "total_returned":95000,"net_amount":525000,"payment_method":"visa",
+                "sale_date":"2026-07-16T10:00:00Z","status":"completed",
+                "item_count":4,"product_names":["Linen Shirt"]
+            }]}
+        }"""
+
+        val response = Gson().fromJson(json, CustomerPurchasesEnvelopeForTest::class.java)
+
+        assertEquals("KLM-42", response.data.data.single().receiptNumber)
+        assertEquals(525000.0, response.data.data.single().netAmount)
+    }
 }
+
+private data class CustomerPurchasesEnvelopeForTest(val success: Boolean, val data: CustomerPurchaseHistoryDto)

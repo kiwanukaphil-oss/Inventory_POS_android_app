@@ -398,7 +398,12 @@ condition, reason, refund/store-credit resolution, and drawer/customer gates.
 Exchanges capture returned and replacement items, use the server preview as the
 authoritative value difference, and require a valid settlement before commit.
 Ambiguous network failures are blocked from blind retry and must be verified in
-Activity. Customer account workspaces remain in the next Phase 5 slice.
+Activity. The customer workspace is also complete with search and account
+filters, profile and business contacts, branch purchase history, credit aging,
+unified account statement, prepaid/store-credit balances, loyalty history, and
+permission-gated internal notes. Credit payments, prepaid deposits/withdrawals,
+and loyalty adjustments remain intentionally deferred until their backend
+mutations support idempotency. Gift vouchers remain the next Phase 5 slice.
 
 **Deliverables**
 

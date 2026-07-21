@@ -36,6 +36,8 @@ import com.kline.inventorypos.feature.activity.ActivityScreen
 import com.kline.inventorypos.feature.activity.ActivityViewModel
 import com.kline.inventorypos.feature.activity.ExchangeWorkflowScreen
 import com.kline.inventorypos.feature.activity.ReturnWorkflowScreen
+import com.kline.inventorypos.feature.customer.CustomerScreen
+import com.kline.inventorypos.feature.customer.CustomerViewModel
 import com.kline.inventorypos.feature.auth.BranchSelectionScreen
 import com.kline.inventorypos.feature.auth.LoginScreen
 import com.kline.inventorypos.feature.auth.OpenRegisterScreen
@@ -76,6 +78,7 @@ fun InventoryPosApp(
     saleViewModel: SaleViewModel,
     inventoryViewModel: InventoryViewModel,
     activityViewModel: ActivityViewModel,
+    customerViewModel: CustomerViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val stage = uiState.stage) {
@@ -107,6 +110,7 @@ fun InventoryPosApp(
             saleViewModel = saleViewModel,
             inventoryViewModel = inventoryViewModel,
             activityViewModel = activityViewModel,
+            customerViewModel = customerViewModel,
             onChangeBranch = viewModel::changeBranch,
             onOpenRegister = viewModel::requestRegister,
             onLogout = viewModel::logout,
@@ -120,6 +124,7 @@ private fun AuthenticatedApp(
     saleViewModel: SaleViewModel,
     inventoryViewModel: InventoryViewModel,
     activityViewModel: ActivityViewModel,
+    customerViewModel: CustomerViewModel,
     onChangeBranch: () -> Unit,
     onOpenRegister: () -> Unit,
     onLogout: () -> Unit,
@@ -128,6 +133,7 @@ private fun AuthenticatedApp(
     val saleState by saleViewModel.uiState.collectAsStateWithLifecycle()
     val inventoryState by inventoryViewModel.uiState.collectAsStateWithLifecycle()
     val activityState by activityViewModel.uiState.collectAsStateWithLifecycle()
+    val customerState by customerViewModel.uiState.collectAsStateWithLifecycle()
     val latestSaleState = rememberUpdatedState(saleState)
     val backStack = remember { mutableStateListOf<Any>(HomeRoute) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -156,6 +162,7 @@ private fun AuthenticatedApp(
     LaunchedEffect(session.user.id, session.branch.id) { saleViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id) { inventoryViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id) { activityViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id) { customerViewModel.bindSession(session) }
     LaunchedEffect(saleState.message) {
         saleState.message?.let { message(it); saleViewModel.consumeMessage() }
     }
@@ -178,6 +185,12 @@ private fun AuthenticatedApp(
     }
     LaunchedEffect(activityState.error) {
         activityState.error?.let { message(it); activityViewModel.clearError() }
+    }
+    LaunchedEffect(customerState.message) {
+        customerState.message?.let { message(it); customerViewModel.consumeMessage() }
+    }
+    LaunchedEffect(customerState.error) {
+        customerState.error?.let { message(it); customerViewModel.clearError() }
     }
 
     Scaffold(
@@ -277,6 +290,23 @@ private fun AuthenticatedApp(
                             onChangeBranch = onChangeBranch,
                             onLogout = onLogout,
                             onMessage = ::message,
+                            onCustomers = { backStack.add(CustomersRoute) },
+                        )
+                    }
+                    CustomersRoute -> NavEntry(key) {
+                        CustomerScreen(
+                            state = customerState,
+                            onBack = {
+                                customerViewModel.close()
+                                backStack.removeLastOrNull()
+                            },
+                            onQuery = customerViewModel::setQuery,
+                            onView = customerViewModel::setView,
+                            onRefresh = customerViewModel::refresh,
+                            onOpen = customerViewModel::open,
+                            onClose = customerViewModel::close,
+                            onRefreshDetail = customerViewModel::refreshDetail,
+                            onAddNote = customerViewModel::addNote,
                         )
                     }
                     CartRoute -> NavEntry(key) {

@@ -92,6 +92,95 @@ data class CustomerDto(
     val phone: String?,
     val email: String?,
     @SerializedName("loyalty_points") val loyaltyPoints: Double?,
+    @SerializedName("customer_type") val customerType: String? = null,
+    val city: String? = null,
+    @SerializedName("total_purchases") val totalPurchases: Int? = null,
+    @SerializedName("total_spent") val totalSpent: Double? = null,
+    @SerializedName("credit_balance") val creditBalance: Double? = null,
+    @SerializedName("credit_limit") val creditLimit: Double? = null,
+    @SerializedName("prepaid_balance") val prepaidBalance: Double? = null,
+    @SerializedName("last_purchase_date") val lastPurchaseDate: String? = null,
+    val tier: CustomerTierDto? = null,
+    val segment: CustomerSegmentDto? = null,
+    val tags: List<String>? = null,
+)
+
+data class CustomerTierDto(val id: String?, val name: String?)
+data class CustomerSegmentDto(val segment: String?, val label: String?)
+
+data class CustomerListResponse(
+    val success: Boolean,
+    val data: List<CustomerDto>,
+    val pagination: SalesPaginationDto,
+)
+
+data class CustomerPurchaseHistoryDto(
+    val data: List<CustomerPurchaseDto>,
+)
+
+data class CustomerPurchaseDto(
+    val id: String,
+    @SerializedName("receipt_number") val receiptNumber: String,
+    @SerializedName("total_amount") val totalAmount: Double,
+    @SerializedName("total_returned") val totalReturned: Double?,
+    @SerializedName("net_amount") val netAmount: Double?,
+    @SerializedName("payment_method") val paymentMethod: String,
+    @SerializedName("sale_date") val saleDate: String,
+    val status: String,
+    @SerializedName("item_count") val itemCount: Int?,
+    @SerializedName("product_names") val productNames: List<String>?,
+)
+
+data class CustomerAgingDto(
+    @SerializedName("current_bucket") val currentBucket: Double?,
+    @SerializedName("bucket_0_30") val bucket0To30: Double?,
+    @SerializedName("bucket_31_60") val bucket31To60: Double?,
+    @SerializedName("bucket_61_plus") val bucket61Plus: Double?,
+)
+
+data class CustomerLedgerEntryDto(
+    val id: String,
+    val account: String,
+    val event: String,
+    @SerializedName("signed_amount") val signedAmount: Double?,
+    @SerializedName("running_balance") val runningBalance: Double?,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("receipt_number") val receiptNumber: String?,
+    val notes: String?,
+)
+
+data class CustomerNoteDto(
+    val id: String,
+    val body: String,
+    val pinned: Boolean?,
+    @SerializedName("created_by_name") val createdByName: String?,
+    @SerializedName("created_at") val createdAt: String,
+)
+
+data class CreateCustomerNoteRequest(val body: String, val pinned: Boolean)
+
+data class CustomerContactDto(
+    val id: String,
+    val name: String,
+    val title: String?,
+    val phone: String?,
+    val email: String?,
+    @SerializedName("is_primary") val isPrimary: Boolean?,
+)
+
+data class LoyaltyEntryDto(
+    val id: String,
+    val type: String,
+    val points: Int,
+    @SerializedName("balance_after") val balanceAfter: Int,
+    val description: String?,
+    @SerializedName("created_at") val createdAt: String,
+)
+
+data class StoreCreditSummaryDto(
+    @SerializedName("active_balance") val activeBalance: Double?,
+    @SerializedName("active_credit_count") val activeCreditCount: Int?,
+    @SerializedName("next_expiry_date") val nextExpiryDate: String?,
 )
 
 data class PromotionEvaluationRequest(

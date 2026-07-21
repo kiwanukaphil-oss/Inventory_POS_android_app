@@ -37,6 +37,42 @@ interface InventoryPosApi {
     @GET("customers/search")
     suspend fun searchCustomers(@Query("q") query: String): ApiEnvelope<List<CustomerDto>>
 
+    @GET("customers")
+    suspend fun customers(
+        @Query("search") search: String? = null,
+        @Query("view") view: String = "all",
+        @Query("sort") sort: String = "recent_activity",
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 50,
+    ): CustomerListResponse
+
+    @GET("customers/{id}")
+    suspend fun customer(@Path("id") id: String): ApiEnvelope<CustomerDto>
+
+    @GET("customers/{id}/purchases")
+    suspend fun customerPurchases(@Path("id") id: String, @Query("limit") limit: Int = 100): ApiEnvelope<CustomerPurchaseHistoryDto>
+
+    @GET("customers/{id}/aging")
+    suspend fun customerAging(@Path("id") id: String): ApiEnvelope<CustomerAgingDto>
+
+    @GET("customers/{id}/activity-ledger")
+    suspend fun customerLedger(@Path("id") id: String, @Query("filter") filter: String = "all", @Query("limit") limit: Int = 100): ApiEnvelope<List<CustomerLedgerEntryDto>>
+
+    @GET("customers/{id}/notes")
+    suspend fun customerNotes(@Path("id") id: String): ApiEnvelope<List<CustomerNoteDto>>
+
+    @POST("customers/{id}/notes")
+    suspend fun createCustomerNote(@Path("id") id: String, @Body request: CreateCustomerNoteRequest): ApiEnvelope<CustomerNoteDto>
+
+    @GET("customers/{id}/contacts")
+    suspend fun customerContacts(@Path("id") id: String): ApiEnvelope<List<CustomerContactDto>>
+
+    @GET("customers/{id}/loyalty-history")
+    suspend fun customerLoyalty(@Path("id") id: String, @Query("limit") limit: Int = 50): ApiEnvelope<List<LoyaltyEntryDto>>
+
+    @GET("customers/{id}/store-credit-summary")
+    suspend fun customerStoreCredit(@Path("id") id: String): ApiEnvelope<StoreCreditSummaryDto>
+
     @POST("promotions/evaluate")
     suspend fun evaluatePromotions(@Body request: PromotionEvaluationRequest): ApiEnvelope<PromotionEvaluationDto>
 
