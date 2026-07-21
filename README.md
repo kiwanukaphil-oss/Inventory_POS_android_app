@@ -1,6 +1,6 @@
 # Inventory POS Android app
 
-This workspace now contains both the native Android Phase 0 application and
+This workspace contains the production-hardened native Android application and
 the approved HTML UX prototype that preceded it.
 
 ## Native Android build
@@ -93,9 +93,9 @@ adb reverse tcp:5000 tcp:5000
 .\gradlew.bat assembleDebug -PINVENTORY_POS_API_URL=http://127.0.0.1:5000/api/
 ```
 
-Supply an HTTPS `INVENTORY_POS_API_URL` for release builds. Without one, the
-release client intentionally targets the non-routable `https://api.invalid/`
-placeholder.
+Supply an approved HTTPS `INVENTORY_POS_API_URL` and signing properties for
+release builds. The release configuration validator intentionally rejects the
+non-routable `https://api.invalid/` placeholder and missing signing material.
 
 ## HTML UX prototype
 
@@ -158,7 +158,7 @@ Individual screens can also be opened with `?screen=payment`, replacing
 
 ## Prototype scope
 
-This version is intended for visual and workflow review before Android
-implementation. API integration, authentication, offline persistence, printer
-and scanner hardware bindings, accessibility testing on devices, and final
-permission enforcement belong to the implementation phase.
+The HTML version remains a visual and workflow reference only. API integration,
+authentication, offline persistence, printer/scanner bindings, device
+accessibility coverage, and permission enforcement live in the native Android
+application and are intentionally absent from the prototype.

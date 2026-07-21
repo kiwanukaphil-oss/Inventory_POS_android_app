@@ -517,10 +517,9 @@ tags/branches after staging acceptance.
 | Scope grows before cashier flow stabilizes | Delayed pilot | P0 vertical slice first; phase exit gates and explicit P1/P2 backlog |
 | API lacks mobile-safe idempotency/sync semantics | Unsafe offline writes | Start online-commit; document and implement backend contract before expansion |
 
-## 13. Immediate implementation sequence
+## 13. Implemented foundation sequence
 
-The build begins only after this document exists. The first implementation turn
-will now:
+The foundation was delivered in this order:
 
 1. Create the Gradle/Android project and deterministic version catalog.
 2. Add the Compose theme and reusable mobile components.
@@ -529,6 +528,9 @@ will now:
 5. Build a debug APK.
 6. Install it with ADB on the connected Samsung phone.
 7. Launch it and capture device-level evidence of the installed package.
+
+Subsequent phase status and production-readiness evidence are recorded above
+and in [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
 
 ## 14. Decisions that still need product confirmation before release
 
@@ -541,7 +543,8 @@ will now:
 - Analytics/crash reporting provider and privacy policy
 - Final brand assets, launcher icon, and receipt/store naming
 
-These decisions do not block the foundation build or staging prototype.
+These decisions do not block local development or a staging pilot, but they do
+block a production-signed release.
 
 ## 15. Architecture references
 
