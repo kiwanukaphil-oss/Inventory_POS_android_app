@@ -226,6 +226,13 @@ private fun AuthenticatedApp(
     }
     LaunchedEffect(session.user.id, session.branch.id) { administrationViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id) { managementReportViewModel.bindSession(session) }
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == HomeRoute) {
+            inventoryViewModel.refresh()
+            managementReportViewModel.refresh()
+            if (session.user.hasPermission("sales.approve")) approvalViewModel.refresh()
+        }
+    }
     LaunchedEffect(saleState.message) {
         saleState.message?.let { message(it); saleViewModel.consumeMessage() }
     }
@@ -325,7 +332,17 @@ private fun AuthenticatedApp(
                             onNewSale = { selectTopLevel(SellRoute) },
                             onStock = { selectTopLevel(InventoryRoute) },
                             onActivity = { selectTopLevel(ActivityRoute) },
-                            onMessage = ::message,
+                            onMore = { selectTopLevel(MoreRoute) },
+                            onProducts = { backStack.add(ProductCatalogRoute) },
+                            onCash = { backStack.add(CashRoute) },
+                            onApprovals = { backStack.add(ApprovalsRoute) },
+                            sales = managementReportState.workspace.sales,
+                            reportLoading = managementReportState.loading,
+                            lowStockCount = inventoryState.summary?.lowStockCount
+                                ?: inventoryState.products.count { it.stock <= it.reorderLevel },
+                            approvalCount = approvalState.requests.size.takeIf {
+                                session.user.hasPermission("sales.approve")
+                            },
                         )
                     }
                     ActivityRoute -> NavEntry(key) {

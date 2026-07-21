@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.TrendingUp
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Approval
 import androidx.compose.material.icons.outlined.Notifications
@@ -26,8 +25,8 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.PointOfSale
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,6 +40,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kline.inventorypos.core.common.formatUgx
 import com.kline.inventorypos.core.designsystem.Amber100
 import com.kline.inventorypos.core.designsystem.Amber50
 import com.kline.inventorypos.core.designsystem.Amber700
@@ -59,6 +59,7 @@ import com.kline.inventorypos.core.designsystem.Slate100
 import com.kline.inventorypos.core.designsystem.Slate500
 import com.kline.inventorypos.core.designsystem.SquareActionIcon
 import com.kline.inventorypos.core.designsystem.StatusPill
+import com.kline.inventorypos.core.model.SalesPeriodReport
 import com.kline.inventorypos.core.session.PosSession
 
 @Composable
@@ -67,32 +68,32 @@ fun HomeScreen(
     onNewSale: () -> Unit,
     onStock: () -> Unit,
     onActivity: () -> Unit,
-    onMessage: (String) -> Unit,
+    onMore: () -> Unit,
+    onProducts: () -> Unit,
+    onCash: () -> Unit,
+    onApprovals: () -> Unit,
+    sales: SalesPeriodReport?,
+    reportLoading: Boolean,
+    lowStockCount: Int,
+    approvalCount: Int?,
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-    ) {
+    LazyColumn(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         item { HomeHeader(session) }
         item {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Spacer(Modifier.height(14.dp))
-                RevenueHero(session.register != null)
-                SectionHeader("Quick actions", action = "View all", onAction = { onMessage("More operations are available from the More tab") })
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
+                RevenueHero(session.register != null, sales, reportLoading)
+                SectionHeader("Quick actions", action = "View all", onAction = onMore)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     QuickAction("New sale", Icons.Outlined.PointOfSale, Modifier.weight(1f), onNewSale)
                     QuickAction("Scan stock", Icons.Outlined.QrCodeScanner, Modifier.weight(1f), onStock)
-                    QuickAction("Add product", Icons.Outlined.AddBox, Modifier.weight(1f)) { onMessage("Product workspace is planned for Phase 6") }
-                    QuickAction("Cash in/out", Icons.Outlined.Payments, Modifier.weight(1f)) { onMessage("Cash movement is audited against Register 02") }
+                    QuickAction("Products", Icons.Outlined.AddBox, Modifier.weight(1f), onProducts)
+                    QuickAction("Cash in/out", Icons.Outlined.Payments, Modifier.weight(1f), onCash)
                 }
                 SectionHeader("Needs attention", action = "Open stock", onAction = onStock)
-                AttentionCard(onStock = onStock, onApprovals = { onMessage("3 manager approvals are pending") })
+                AttentionCard(lowStockCount, approvalCount, onStock, onApprovals)
                 SectionHeader("Sales pulse", action = "Details", onAction = onActivity)
-                SalesPulseCard()
+                SalesPulseCard(sales)
                 Spacer(Modifier.height(20.dp))
             }
         }
@@ -102,33 +103,16 @@ fun HomeScreen(
 @Composable
 private fun HomeHeader(session: PosSession) {
     Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 11.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(Brush.linearGradient(listOf(Primary950, Primary700)), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(42.dp).background(Brush.linearGradient(listOf(Primary950, Primary700)), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
                 Text("KL", color = Color.White, fontWeight = FontWeight.ExtraBold)
             }
             Column(Modifier.padding(start = 11.dp).weight(1f)) {
-                Text("K-Line Men", style = MaterialTheme.typography.titleMedium)
+                Text("Inventory POS", style = MaterialTheme.typography.titleMedium)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(7.dp).background(Primary600, CircleShape))
-                    Text(
-                        "  ${session.branch.name} · ${if (session.register != null) "Register open" else "No register"}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Text("  ${session.branch.name} · ${if (session.register != null) "Register open" else "No register"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-            }
-            IconButton(onClick = {}) {
-                Icon(Icons.Outlined.Notifications, contentDescription = "Notifications")
             }
             Box(Modifier.size(36.dp).background(Primary950, CircleShape), contentAlignment = Alignment.Center) {
                 Text(session.user.initials, color = Color.White, style = MaterialTheme.typography.labelMedium)
@@ -138,155 +122,73 @@ private fun HomeHeader(session: PosSession) {
 }
 
 @Composable
-private fun RevenueHero(registerOpen: Boolean) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Brush.linearGradient(listOf(Primary950, Primary800, Primary700)), RoundedCornerShape(22.dp))
-            .padding(20.dp),
-    ) {
+private fun RevenueHero(registerOpen: Boolean, report: SalesPeriodReport?, loading: Boolean) {
+    Box(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Primary950, Primary800, Primary700)), RoundedCornerShape(22.dp)).padding(20.dp)) {
         Column {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Tuesday, 21 July", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.72f))
-                StatusPill(
-                    if (registerOpen) "●  Register open" else "Register closed",
-                    containerColor = Color.White.copy(alpha = 0.12f),
-                    contentColor = Color.White,
-                )
+                Text("Last 7 days", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = .72f))
+                StatusPill(if (registerOpen) "Register open" else "Register closed", containerColor = Color.White.copy(alpha = .12f), contentColor = Color.White)
             }
             Spacer(Modifier.height(20.dp))
-            Text(
-                "UGX 4,850,000",
-                style = MaterialTheme.typography.headlineSmall.copy(fontFamily = MoneyFontFamily),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Net revenue today", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.68f))
-                Text("  ↗ 12.4%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF86EFAC))
-            }
+            if (loading && report == null) CircularProgressIndicator(Modifier.size(26.dp), color = Color.White, strokeWidth = 2.dp)
+            Text(report?.let { formatUgx(it.netRevenue) } ?: "Sales summary restricted", style = MaterialTheme.typography.headlineSmall.copy(fontFamily = MoneyFontFamily), color = Color.White, fontWeight = FontWeight.Bold)
+            Text(if (report == null) "Report permission is required" else "Net revenue", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = .68f))
             Spacer(Modifier.height(18.dp))
-            Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = 0.13f)))
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .13f)))
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth()) {
-                HeroMetric("32", "Transactions", Modifier.weight(1f))
-                HeroMetric("UGX 151,563", "Average basket", Modifier.weight(1f))
+                HeroMetric(report?.transactions?.toString() ?: "—", "Transactions", Modifier.weight(1f))
+                HeroMetric(report?.let { formatUgx(it.averageSale) } ?: "—", "Average basket", Modifier.weight(1f))
             }
         }
     }
 }
 
+@Composable private fun HeroMetric(value: String, label: String, modifier: Modifier) { Column(modifier) { Text(value, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold); Text(label, color = Color.White.copy(alpha = .62f), style = MaterialTheme.typography.bodySmall) } }
+
 @Composable
-private fun HeroMetric(value: String, label: String, modifier: Modifier = Modifier) {
-    Column(modifier) {
-        Text(value, color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-        Text(label, color = Color.White.copy(alpha = 0.62f), style = MaterialTheme.typography.bodySmall)
-    }
+private fun QuickAction(label: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
+    PosCard(modifier.clickable(onClick = onClick)) { Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) { SquareActionIcon(icon); Spacer(Modifier.height(8.dp)); Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 2) } }
 }
 
 @Composable
-private fun QuickAction(
-    label: String,
-    icon: ImageVector,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    PosCard(modifier.clickable(onClick = onClick)) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            SquareActionIcon(icon)
-            Spacer(Modifier.height(8.dp))
-            Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 2)
-        }
-    }
-}
-
-@Composable
-private fun AttentionCard(onStock: () -> Unit, onApprovals: () -> Unit) {
+private fun AttentionCard(lowStock: Int, approvals: Int?, onStock: () -> Unit, onApprovals: () -> Unit) {
     PosCard(Modifier.fillMaxWidth()) {
-        AttentionRow(
-            icon = Icons.Outlined.WarningAmber,
-            title = "Low stock",
-            subtitle = "7 variants are below reorder level",
-            count = "7",
-            iconBackground = Amber50,
-            iconColor = Amber700,
-            countBackground = Amber100,
-            onClick = onStock,
-        )
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Slate100))
-        AttentionRow(
-            icon = Icons.Outlined.Approval,
-            title = "Approvals pending",
-            subtitle = "Discount and stock requests",
-            count = "3",
-            iconBackground = Primary50,
-            iconColor = Primary800,
-            countBackground = Primary100,
-            onClick = onApprovals,
-        )
+        if (lowStock == 0 && (approvals ?: 0) == 0) {
+            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) { SquareActionIcon(Icons.Outlined.Notifications, backgroundColor = MoneyGreen100, contentColor = MoneyGreen700); Text("No stock or approval exceptions need attention.", Modifier.padding(start = 11.dp), color = MoneyGreen700) }
+        } else {
+            if (lowStock > 0) AttentionRow(Icons.Outlined.WarningAmber, "Low stock", "$lowStock variants need review", lowStock.toString(), Amber50, Amber700, Amber100, onStock)
+            if (lowStock > 0 && approvals != null && approvals > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Slate100))
+            if (approvals != null && approvals > 0) AttentionRow(Icons.Outlined.Approval, "Approvals pending", "Manager decision queue", approvals.toString(), Primary50, Primary800, Primary100, onApprovals)
+        }
     }
 }
 
 @Composable
-private fun AttentionRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    count: String,
-    iconBackground: Color,
-    iconColor: Color,
-    countBackground: Color,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+private fun AttentionRow(icon: ImageVector, title: String, subtitle: String, count: String, iconBackground: Color, iconColor: Color, countBackground: Color, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
         SquareActionIcon(icon, backgroundColor = iconBackground, contentColor = iconColor)
-        Column(Modifier.padding(start = 11.dp).weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Slate500)
-        }
+        Column(Modifier.padding(start = 11.dp).weight(1f)) { Text(title, style = MaterialTheme.typography.titleSmall); Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Slate500) }
         StatusPill(count, containerColor = countBackground, contentColor = iconColor)
     }
 }
 
 @Composable
-private fun SalesPulseCard() {
+private fun SalesPulseCard(report: SalesPeriodReport?) {
     PosCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Last 7 days", style = MaterialTheme.typography.titleSmall)
-                Text("UGX 28.6m total", style = MaterialTheme.typography.bodySmall, color = Slate500)
-            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Last 7 days", style = MaterialTheme.typography.titleSmall); Text(report?.let { "${formatUgx(it.netRevenue)} total" } ?: "No report data", style = MaterialTheme.typography.bodySmall, color = Slate500) }
             Spacer(Modifier.height(12.dp))
             Canvas(Modifier.fillMaxWidth().height(88.dp)) {
-                val gridColor = Slate100
-                repeat(3) { index ->
-                    val y = size.height * (index + 1) / 4
-                    drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
-                }
-                val points = listOf(.78f, .61f, .66f, .38f, .49f, .27f, .08f)
+                repeat(3) { index -> val y = size.height * (index + 1) / 4; drawLine(Slate100, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f) }
+                val values = report?.daily?.map { it.revenue }.orEmpty()
+                val maximum = values.maxOrNull()?.coerceAtLeast(1) ?: 1
+                val points = values.map { 1f - (it.toFloat() / maximum.toFloat() * .85f) }
                 val path = Path()
-                points.forEachIndexed { index, value ->
-                    val x = size.width * index / (points.size - 1)
-                    val y = size.height * value
-                    if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                }
-                drawPath(path, color = Primary700, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5f))
+                points.forEachIndexed { index, value -> val x = if (points.size <= 1) size.width / 2 else size.width * index / (points.size - 1); val y = size.height * value; if (index == 0) path.moveTo(x, y) else path.lineTo(x, y) }
+                if (points.isNotEmpty()) drawPath(path, color = Primary700, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5f))
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.AutoMirrored.Outlined.TrendingUp, contentDescription = null, tint = MoneyGreen700, modifier = Modifier.size(16.dp))
-                Text("  Revenue is 8.2% above last week", style = MaterialTheme.typography.labelSmall, color = MoneyGreen700)
-            }
+            Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.AutoMirrored.Outlined.TrendingUp, null, Modifier.size(16.dp), tint = if (report == null) Slate500 else MoneyGreen700); Text(if (report == null) "  Report access controls this summary" else "  ${report.transactions} transactions in this period", style = MaterialTheme.typography.labelSmall, color = if (report == null) Slate500 else MoneyGreen700) }
         }
     }
 }
