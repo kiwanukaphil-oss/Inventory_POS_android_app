@@ -1,6 +1,10 @@
 package com.kline.inventorypos.data.document
 
+import android.content.Context
+import android.graphics.BitmapFactory
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.kline.inventorypos.R
 import com.kline.inventorypos.core.model.BusinessDocument
 import com.kline.inventorypos.core.model.BusinessDocumentItem
 import com.kline.inventorypos.data.network.StoreConfigDto
@@ -37,7 +41,9 @@ class BusinessDocumentPdfRendererTest {
         )
         val store = StoreConfigDto("K-Line Men", "Kampala Road", "Kampala", "Uganda", "+256 700 000000", "sales@example.com", "UGX", true, "VAT", null, 14, null, "print")
 
-        val bytes = BusinessDocumentPdfRenderer.render(document, store)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val logo = BitmapFactory.decodeResource(context.resources, R.drawable.kline_logo)
+        val bytes = BusinessDocumentPdfRenderer.render(document, store, logo)
 
         assertTrue(bytes.size > 1_000)
         assertEquals("%PDF", bytes.copyOfRange(0, 4).toString(Charsets.US_ASCII))

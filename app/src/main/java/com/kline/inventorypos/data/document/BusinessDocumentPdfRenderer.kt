@@ -1,7 +1,10 @@
 package com.kline.inventorypos.data.document
 
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import com.kline.inventorypos.core.model.BusinessDocument
@@ -17,7 +20,7 @@ object BusinessDocumentPdfRenderer {
     private const val RIGHT = 549f
     private const val CONTENT_BOTTOM = 748f
 
-    fun render(document: BusinessDocument, store: StoreConfigDto): ByteArray {
+    fun render(document: BusinessDocument, store: StoreConfigDto, logo: Bitmap? = null): ByteArray {
         val pdf = PdfDocument()
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         val money = NumberFormat.getNumberInstance(Locale.US)
@@ -82,9 +85,19 @@ object BusinessDocumentPdfRenderer {
             return tableHeader(68f)
         }
 
-        text(store.storeName?.takeIf(String::isNotBlank) ?: "Inventory POS", LEFT, 56f, 17f, bold = true)
+        val storeTextLeft = if (logo != null) {
+            val source = Rect(
+                (logo.width * 0.20f).toInt(),
+                (logo.height * 0.14f).toInt(),
+                (logo.width * 0.80f).toInt(),
+                (logo.height * 0.55f).toInt(),
+            )
+            canvas.drawBitmap(logo, source, RectF(LEFT, 24f, 158f, 102f), paint)
+            174f
+        } else LEFT
+        text(store.storeName?.takeIf(String::isNotBlank) ?: "K-Line Men", storeTextLeft, 50f, 17f, bold = true)
         val storeAddress = listOfNotNull(store.addressLine1, store.city, store.country).filter(String::isNotBlank).joinToString(", ")
-        if (storeAddress.isNotBlank()) text(storeAddress, LEFT, 75f, 9f, color = Color.DKGRAY)
+        if (storeAddress.isNotBlank()) text(storeAddress, storeTextLeft, 70f, 9f, color = Color.DKGRAY)
         right(document.type.uppercase(), RIGHT, 52f, 26f)
         right("# ${document.number}", RIGHT, 72f, 10f, bold = true)
 

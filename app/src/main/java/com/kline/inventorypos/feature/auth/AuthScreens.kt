@@ -1,6 +1,7 @@
 package com.kline.inventorypos.feature.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,6 +51,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -77,6 +83,7 @@ import com.kline.inventorypos.core.designsystem.SquareActionIcon
 import com.kline.inventorypos.core.designsystem.StatusPill
 import com.kline.inventorypos.core.session.AuthenticatedContext
 import com.kline.inventorypos.core.session.PosBranch
+import com.kline.inventorypos.R
 
 @Composable
 fun RestoringSessionScreen() {
@@ -415,19 +422,19 @@ fun OpenRegisterScreen(
 
 @Composable
 private fun BrandMark(compact: Boolean = false) {
-    Box(
+    val bitmap = ImageBitmap.imageResource(R.drawable.kline_logo)
+    val crop = (bitmap.height * 0.36f).toInt()
+    Image(
+        painter = BitmapPainter(
+            image = bitmap,
+            srcOffset = IntOffset((bitmap.width - crop) / 2, (bitmap.height * 0.12f).toInt()),
+            srcSize = IntSize(crop, crop),
+        ),
+        contentDescription = "K-Line Men",
         modifier = Modifier
             .size(if (compact) 46.dp else 66.dp)
-            .background(Brush.linearGradient(listOf(Primary950, Primary700)), RoundedCornerShape(if (compact) 14.dp else 20.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            "KL",
-            color = Color.White,
-            style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.ExtraBold,
-        )
-    }
+            .background(Color.Black, RoundedCornerShape(if (compact) 14.dp else 20.dp)),
+    )
 }
 
 @Composable

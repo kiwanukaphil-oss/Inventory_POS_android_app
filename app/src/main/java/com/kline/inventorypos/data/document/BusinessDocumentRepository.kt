@@ -1,5 +1,6 @@
 package com.kline.inventorypos.data.document
 
+import android.graphics.Bitmap
 import com.google.gson.Gson
 import com.kline.inventorypos.core.model.BusinessDocument
 import com.kline.inventorypos.core.model.BusinessDocumentItem
@@ -30,12 +31,20 @@ interface BusinessDocumentRepository {
     suspend fun transition(id: String, status: String): BusinessDocument
     suspend fun void(id: String, reason: String): BusinessDocument
     suspend fun convert(id: String, paymentMethod: String?, paymentReference: String): BusinessDocument
+    suspend fun pdf(document: BusinessDocument): GeneratedDocumentPdf
     suspend fun email(document: BusinessDocument, recipient: String, cc: List<String>, message: String): BusinessDocument
 }
 
+data class GeneratedDocumentPdf(val filename: String, val bytes: ByteArray)
+
 class DocumentMutationUncertainException : IllegalStateException("The connection ended before confirmation. Refresh the document and linked records before attempting another change.")
 
-class DefaultBusinessDocumentRepository(private val api: InventoryPosApi, private val gson: Gson, private val isDemo: () -> Boolean) : BusinessDocumentRepository {
+class DefaultBusinessDocumentRepository(
+    private val api: InventoryPosApi,
+    private val gson: Gson,
+    private val isDemo: () -> Boolean,
+    private val documentLogo: Bitmap? = null,
+) : BusinessDocumentRepository {
     private val demo = mutableListOf(demoDocument("doc-1", "quotation", "QT-01042", "sent", "Acacia Facilities Ltd", 1_850_000), demoDocument("doc-2", "invoice", "INV-00482", "draft", "Nile Corporate Wear", 3_420_000))
 
     override suspend fun list(type: String?, status: String?, search: String): List<BusinessDocument> {
@@ -64,6 +73,14 @@ class DefaultBusinessDocumentRepository(private val api: InventoryPosApi, privat
         if (isDemo()) { val source = demo.first { it.id == id }; val target = if (source.type == "quotation") "invoice" else "receipt"; val created = source.copy(id = "doc-${UUID.randomUUID()}", type = target, number = "${target.take(3).uppercase()}-${1000 + demo.size}", status = if (target == "receipt") "issued" else "draft", sourceNumber = source.number, paymentMethod = paymentMethod, paymentReference = paymentReference.clean()); demo[demo.indexOf(source)] = source.copy(status = "converted", derived = listOf(DerivedDocument(created.id, target, created.number, created.status))); demo.add(0, created); return created }
         return mutate { api.convertBusinessDocument(id, ConvertDocumentRequest(LocalDate.now().toString(), paymentMethod = paymentMethod, paymentReference = paymentReference.clean())).data }.toDomain()
     }
+
+    override suspend fun pdf(document: BusinessDocument): GeneratedDocumentPdf {
+        val store = if (isDemo()) demoStoreConfig() else read { api.storeConfig().data }
+        val bytes = BusinessDocumentPdfRenderer.render(document, store, documentLogo)
+        require(bytes.isNotEmpty()) { "The PDF could not be generated." }
+        return GeneratedDocumentPdf(document.pdfFilename(), bytes)
+    }
+
     override suspend fun email(document: BusinessDocument, recipient: String, cc: List<String>, message: String): BusinessDocument {
         val to = recipient.trim()
         require(EMAIL.matches(to)) { "Enter a valid recipient email address." }
@@ -80,15 +97,13 @@ class DefaultBusinessDocumentRepository(private val api: InventoryPosApi, privat
             demo.indexOfFirst { it.id == document.id }.takeIf { it >= 0 }?.let { demo[it] = updated }
             return updated
         }
-        val store = read { api.storeConfig().data }
-        val pdfBytes = BusinessDocumentPdfRenderer.render(document, store)
+        val pdf = pdf(document)
         val fields = buildMap {
             put("to", to.toRequestBody(TEXT_MEDIA_TYPE))
             message.trim().takeIf(String::isNotBlank)?.let { put("message", it.toRequestBody(TEXT_MEDIA_TYPE)) }
             if (copies.isNotEmpty()) put("cc", gson.toJson(copies).toRequestBody(TEXT_MEDIA_TYPE))
         }
-        val filename = document.number.replace(Regex("[^A-Za-z0-9._-]"), "-") + ".pdf"
-        val pdfPart = MultipartBody.Part.createFormData("pdf", filename, pdfBytes.toRequestBody(PDF_MEDIA_TYPE))
+        val pdfPart = MultipartBody.Part.createFormData("pdf", pdf.filename, pdf.bytes.toRequestBody(PDF_MEDIA_TYPE))
         return mutate { api.emailBusinessDocument(document.id, fields, pdfPart).data }.toDomain()
     }
     private suspend fun updateDemoOrLive(id: String, live: suspend () -> BusinessDocument, change: (BusinessDocument) -> BusinessDocument): BusinessDocument { if (!isDemo()) return live(); val old = demo.first { it.id == id }; return change(old).also { demo[demo.indexOf(old)] = it } }
@@ -100,6 +115,22 @@ class DefaultBusinessDocumentRepository(private val api: InventoryPosApi, privat
 private fun BusinessDocumentDto.toDomain() = BusinessDocument(id, documentType, documentNumber, status, billToName, billToAddress, documentDate.take(10), validUntil?.take(10), dueDate?.take(10), paymentMethod, paymentReference, subtotal.roundToLong(), total.roundToLong(), notes, sourceDocumentNumber, voidReason, createdByName, createdAt, items.orEmpty().map { BusinessDocumentItem(it.id, it.description, it.quantity, it.unitPrice.roundToLong(), it.lineTotal.roundToLong()) }, derivedDocuments.orEmpty().map { DerivedDocument(it.id, it.documentType, it.documentNumber, it.status) }, customerEmail, emailedTo, emailedCc.orEmpty(), emailedAt)
 private fun String.clean() = trim().takeIf(String::isNotBlank)
 private fun demoDocument(id: String, type: String, number: String, status: String, customer: String, total: Long) = BusinessDocument(id, type, number, status, customer, "Kampala", LocalDate.now().toString(), LocalDate.now().plusDays(14).toString(), null, null, null, total, total, "Corporate uniform order", null, null, "Philip Kiwanuka", Instant.now().toString(), listOf(BusinessDocumentItem("l-$id", "Premium cotton shirts", 10.0, total / 10, total)), emptyList())
+private fun BusinessDocument.pdfFilename() = number.replace(Regex("[^A-Za-z0-9._-]"), "-") + ".pdf"
+private fun demoStoreConfig() = com.kline.inventorypos.data.network.StoreConfigDto(
+    storeName = "K-Line Men",
+    addressLine1 = "",
+    city = "Kampala",
+    country = "Uganda",
+    phone = null,
+    email = null,
+    currencyCode = "UGX",
+    taxEnabled = null,
+    taxLabel = null,
+    taxRegistrationNumber = null,
+    returnWindowDays = null,
+    printerBridgeUrl = null,
+    defaultReceiptAction = null,
+)
 
 private val EMAIL = Regex("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", RegexOption.IGNORE_CASE)
 private val TEXT_MEDIA_TYPE = "text/plain; charset=utf-8".toMediaType()

@@ -1,12 +1,16 @@
 package com.kline.inventorypos.feature.document
 
+import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,22 +22,60 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.kline.inventorypos.core.common.AmountGroupingVisualTransformation
 import com.kline.inventorypos.core.common.formatUgx
 import com.kline.inventorypos.core.designsystem.*
 import com.kline.inventorypos.core.model.BusinessDocument
 import com.kline.inventorypos.core.model.DocumentDraftLine
+import com.kline.inventorypos.data.document.GeneratedDocumentPdf
+import java.io.File
 import java.time.LocalDate
+import kotlin.math.roundToLong
 
-@Composable fun DocumentScreen(state: DocumentUiState, onBack: () -> Unit, onType: (String?) -> Unit, onStatus: (String?) -> Unit, onQuery: (String) -> Unit, onSearch: () -> Unit, onRefresh: () -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit, onSave: (String?, String, String, String, String, String?, String?, String?, String, String, List<DocumentDraftLine>) -> Unit, onTransition: (String, String) -> Unit, onVoid: (String, String) -> Unit, onConvert: (String, String?, String) -> Unit, onEmail: (BusinessDocument, String, List<String>, String) -> Unit) {
+@Composable fun DocumentScreen(state: DocumentUiState, onBack: () -> Unit, onType: (String?) -> Unit, onStatus: (String?) -> Unit, onQuery: (String) -> Unit, onSearch: () -> Unit, onRefresh: () -> Unit, onOpen: (String) -> Unit, onClose: () -> Unit, onSave: (String?, String, String, String, String, String?, String?, String?, String, String, List<DocumentDraftLine>) -> Unit, onTransition: (String, String) -> Unit, onVoid: (String, String) -> Unit, onConvert: (String, String?, String) -> Unit, onEmail: (BusinessDocument, String, List<String>, String) -> Unit, onPdf: (BusinessDocument, DocumentPdfAction) -> Unit, onPdfConsumed: () -> Unit, onPdfResult: (String?, String?) -> Unit) {
     var editor by rememberSaveable { mutableStateOf(false) }; var lifecycle by rememberSaveable { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    var pendingSave by remember { mutableStateOf<GeneratedDocumentPdf?>(null) }
+    val savePdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
+        val pdf = pendingSave
+        pendingSave = null
+        if (uri != null && pdf != null) {
+            runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(pdf.bytes) }
+                    ?: error("The selected file could not be opened.")
+            }.onSuccess { onPdfResult("${pdf.filename} saved", null) }
+                .onFailure { onPdfResult(null, it.message ?: "The PDF could not be saved.") }
+        }
+    }
+    LaunchedEffect(state.preparedPdf?.requestId) {
+        val prepared = state.preparedPdf ?: return@LaunchedEffect
+        onPdfConsumed()
+        when (prepared.action) {
+            DocumentPdfAction.SAVE -> {
+                pendingSave = prepared.file
+                savePdf.launch(prepared.file.filename)
+            }
+            DocumentPdfAction.VIEW -> runCatching {
+                val directory = File(context.cacheDir, "documents").apply { mkdirs() }
+                val file = File(directory, prepared.file.filename).apply { writeBytes(prepared.file.bytes) }
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                val intent = Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, "application/pdf")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                context.startActivity(Intent.createChooser(intent, "View ${prepared.file.filename}"))
+            }.onSuccess { onPdfResult("PDF ready to view", null) }
+                .onFailure { onPdfResult(null, "No PDF viewer is available on this device.") }
+        }
+    }
     LaunchedEffect(state.message) { if (state.message != null) { editor = false; lifecycle = null } }
     BackHandler(enabled = editor || state.detail != null) { if (editor) editor = false else onClose() }
-    when { editor -> DocumentEditor(state, state.detail?.takeIf { it.status == "draft" }, { editor = false }, onSave); state.detail != null -> DocumentDetail(state, { onClose() }, { editor = true }, { lifecycle = it }, onTransition, onConvert, onEmail); else -> DocumentList(state, onBack, onType, onStatus, onQuery, onSearch, onRefresh, onOpen) { editor = true } }
+    when { editor -> DocumentEditor(state, state.detail?.takeIf { it.status == "draft" }, { editor = false }, onSave); state.detail != null -> DocumentDetail(state, { onClose() }, { editor = true }, { lifecycle = it }, onTransition, onConvert, onEmail, onPdf); else -> DocumentList(state, onBack, onType, onStatus, onQuery, onSearch, onRefresh, onOpen) { editor = true } }
     val doc = state.detail
     if (lifecycle == "void" && doc != null) ReasonDialog("Void ${doc.number}?", true, { lifecycle = null }) { onVoid(doc.id, it) }
 }
@@ -42,10 +84,11 @@ import java.time.LocalDate
 @Composable private fun DocumentCard(doc: BusinessDocument,onOpen:()->Unit){Surface(Modifier.fillMaxWidth().clickable(onClick=onOpen),color=MaterialTheme.colorScheme.surface,shape=RoundedCornerShape(13.dp)){Row(Modifier.padding(13.dp),verticalAlignment=Alignment.CenterVertically){Icon(when(doc.type){"invoice"->Icons.Outlined.RequestQuote;"receipt"->Icons.AutoMirrored.Outlined.ReceiptLong;else->Icons.Outlined.Description},null,tint=Primary700);Column(Modifier.padding(start=10.dp).weight(1f)){Text(doc.number,fontWeight=FontWeight.Bold);Text("${doc.billToName} · ${doc.status.label()}",color=Slate500,style=MaterialTheme.typography.bodySmall,maxLines=1,overflow=TextOverflow.Ellipsis)};Column(horizontalAlignment=Alignment.End){Text(formatUgx(doc.total),fontFamily=MoneyFontFamily,fontWeight=FontWeight.Bold);Text(doc.date,color=Slate500,style=MaterialTheme.typography.labelSmall)}}}}
 
 @Composable
-private fun DocumentDetail(state: DocumentUiState, onBack: () -> Unit, onEdit: () -> Unit, onLifecycle: (String) -> Unit, onTransition: (String, String) -> Unit, onConvert: (String, String?, String) -> Unit, onEmail: (BusinessDocument, String, List<String>, String) -> Unit) {
+private fun DocumentDetail(state: DocumentUiState, onBack: () -> Unit, onEdit: () -> Unit, onLifecycle: (String) -> Unit, onTransition: (String, String) -> Unit, onConvert: (String, String?, String) -> Unit, onEmail: (BusinessDocument, String, List<String>, String) -> Unit, onPdf: (BusinessDocument, DocumentPdfAction) -> Unit) {
     val document = state.detail!!
     var convert by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(state.message) { if (state.message?.contains("emailed to", ignoreCase = true) == true) email = false }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         FocusedHeader(document.number, "${document.type.label()} · ${document.status.label()}", onBack)
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -57,6 +100,10 @@ private fun DocumentDetail(state: DocumentUiState, onBack: () -> Unit, onEdit: (
             document.voidReason?.let { item { Warn("Void reason: $it") } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (document.status == "draft" && state.canEdit) OutlinedButton(onEdit, Modifier.fillMaxWidth()) { Text("Edit draft") }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton({ onPdf(document, DocumentPdfAction.VIEW) }, Modifier.weight(1f), enabled = !state.working) { Icon(Icons.Outlined.Visibility, null); Text("  View PDF") }
+                    OutlinedButton({ onPdf(document, DocumentPdfAction.SAVE) }, Modifier.weight(1f), enabled = !state.working) { Icon(Icons.Outlined.Download, null); Text("  Save PDF") }
+                }
                 if (document.status != "void" && state.canSend) Button({ email = true }, Modifier.fillMaxWidth(), enabled = !state.working && !state.uncertain) { Icon(Icons.Outlined.Email, null); Text("  Email PDF") }
                 nextStatuses(document).forEach { status -> OutlinedButton({ onTransition(document.id, status) }, Modifier.fillMaxWidth(), enabled = !state.working && !state.uncertain) { Text("Mark ${status.label()}") } }
                 if (document.type != "receipt" && document.status in setOf("draft", "sent", "accepted", "paid") && state.canCreate) Button({ convert = true }, Modifier.fillMaxWidth()) { Text("Convert to ${if (document.type == "quotation") "invoice" else "receipt"}") }
@@ -65,30 +112,73 @@ private fun DocumentDetail(state: DocumentUiState, onBack: () -> Unit, onEdit: (
         }
     }
     if (convert) ConvertDialog(document.type == "invoice", { convert = false }) { method, reference -> onConvert(document.id, method, reference) }
-    if (email) EmailDocumentDialog(document, state.working, { if (!state.working) email = false }) { to, cc, message -> onEmail(document, to, cc, message); email = false }
+    if (email) EmailDocumentDialog(document, state.working, { if (!state.working) email = false }) { to, cc, message -> onEmail(document, to, cc, message) }
 }
 
 @Composable
 private fun DocumentEditor(state: DocumentUiState, document: BusinessDocument?, onBack: () -> Unit, onSave: (String?, String, String, String, String, String?, String?, String?, String, String, List<DocumentDraftLine>) -> Unit) {
-    var type by rememberSaveable { mutableStateOf(document?.type ?: "quotation") }; var bill by rememberSaveable { mutableStateOf(document?.billToName.orEmpty()) }; var address by rememberSaveable { mutableStateOf(document?.billToAddress.orEmpty()) }; var notes by rememberSaveable { mutableStateOf(document?.notes.orEmpty()) }; var description by rememberSaveable { mutableStateOf("") }; var quantity by rememberSaveable { mutableStateOf("1") }; var price by rememberSaveable { mutableStateOf("") }
+    var type by rememberSaveable { mutableStateOf(document?.type ?: "quotation") }; var bill by rememberSaveable { mutableStateOf(document?.billToName.orEmpty()) }; var address by rememberSaveable { mutableStateOf(document?.billToAddress.orEmpty()) }; var notes by rememberSaveable { mutableStateOf(document?.notes.orEmpty()) }
     var lines by remember(document?.id) { mutableStateOf<List<DocumentDraftLine>>(document?.items?.map { DocumentDraftLine(it.description, it.quantity, it.unitPrice) }.orEmpty()) }
+    var lineDialog by rememberSaveable { mutableStateOf(false) }
+    var editingIndex by rememberSaveable { mutableStateOf<Int?>(null) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         FocusedHeader(if (document == null) "New document" else "Edit ${document.number}", "Client and line items", onBack)
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (document == null) item { Choices(listOf("quotation" to "Quote", "invoice" to "Invoice", "receipt" to "Receipt"), type) { type = it } }
             item { OutlinedTextField(bill, { bill = it.take(160) }, Modifier.fillMaxWidth(), label = { Text("Bill to") }, singleLine = true) }
             item { OutlinedTextField(address, { address = it.take(300) }, Modifier.fillMaxWidth(), label = { Text("Address (optional)") }, minLines = 2) }
-            item { Text("Line items", fontWeight = FontWeight.Bold) }
-            items(lines.indices.toList()) { index -> val line = lines[index]; Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(line.description, fontWeight = FontWeight.Bold); Text("${line.quantity.cleanQuantity()} × ${formatUgx(line.unitPrice)}", color = Slate500) }; IconButton({ lines = lines.filterIndexed { position, _ -> position != index } }) { Icon(Icons.Outlined.DeleteOutline, "Remove", tint = Error700) } } }
-            item { OutlinedTextField(description, { description = it.take(300) }, Modifier.fillMaxWidth(), label = { Text("Item description") }, singleLine = true) }
-            item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(quantity, { quantity = it.filter { char -> char.isDigit() || char == '.' }.take(8) }, Modifier.weight(1f), label = { Text("Qty") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true); OutlinedTextField(price, { price = it.filter(Char::isDigit).take(12) }, Modifier.weight(2f), label = { Text("Unit price") }, prefix = { Text("UGX ") }, visualTransformation = AmountGroupingVisualTransformation, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true) } }
-            item { OutlinedButton({ val qty = quantity.toDoubleOrNull(); val amount = price.toLongOrNull(); if (description.isNotBlank() && qty != null && qty > 0 && amount != null) { lines = lines + DocumentDraftLine(description, qty, amount); description = ""; quantity = "1"; price = "" } }, Modifier.fillMaxWidth()) { Text("Add line") } }
+            item { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Line items", fontWeight = FontWeight.Bold); Text("${lines.size} ${if (lines.size == 1) "item" else "items"} · ${formatUgx(lines.sumOf { (it.quantity * it.unitPrice).roundToLong() })}", color = Slate500, style = MaterialTheme.typography.bodySmall) }; Button({ editingIndex = null; lineDialog = true }) { Icon(Icons.Outlined.Add, null); Text("  Add item") } } }
+            if (lines.isEmpty()) item { Empty("Add every product or service that should appear on this document.") }
+            itemsIndexed(lines, key = { index, _ -> index }) { index, line -> DocumentDraftLineCard(line, index + 1, { editingIndex = index; lineDialog = true }) { lines = lines.filterIndexed { position, _ -> position != index } } }
             item { OutlinedTextField(notes, { notes = it.take(1000) }, Modifier.fillMaxWidth(), label = { Text("Notes (optional)") }, minLines = 3) }
             if (state.uncertain) item { Warn("Refresh before retrying this document change.") }
         }
         Surface(shadowElevation = 8.dp) { Button({ onSave(document?.id, type, bill, address, document?.date ?: LocalDate.now().toString(), document?.validUntil, document?.dueDate, document?.paymentMethod, document?.paymentReference.orEmpty(), notes, lines) }, Modifier.fillMaxWidth().padding(12.dp).height(52.dp), enabled = bill.isNotBlank() && lines.isNotEmpty() && !state.working && !state.uncertain) { if (state.working) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text(if (document == null) "Create document" else "Save draft") } }
     }
+    if (lineDialog) LineItemDialog(lines.getOrNull(editingIndex ?: -1), { lineDialog = false }) { line ->
+        lines = upsertDocumentLine(lines, editingIndex, line)
+        lineDialog = false
+        editingIndex = null
+    }
 }
+
+@Composable private fun DocumentDraftLineCard(line: DocumentDraftLine, number: Int, onEdit: () -> Unit, onRemove: () -> Unit) {
+    Surface(Modifier.fillMaxWidth().clickable(onClick = onEdit), color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(12.dp)) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Surface(color = Primary700, contentColor = MaterialTheme.colorScheme.onPrimary, shape = RoundedCornerShape(8.dp)) { Text(number.toString(), Modifier.padding(horizontal = 9.dp, vertical = 5.dp), fontWeight = FontWeight.Bold) }
+            Column(Modifier.padding(horizontal = 10.dp).weight(1f)) { Text(line.description, fontWeight = FontWeight.Bold); Text("${line.quantity.cleanQuantity()} × ${formatUgx(line.unitPrice)}  ·  ${formatUgx((line.quantity * line.unitPrice).roundToLong())}", color = Slate500, style = MaterialTheme.typography.bodySmall) }
+            IconButton(onEdit) { Icon(Icons.Outlined.Edit, "Edit item") }
+            IconButton(onRemove) { Icon(Icons.Outlined.DeleteOutline, "Remove item", tint = Error700) }
+        }
+    }
+}
+
+@Composable private fun LineItemDialog(initial: DocumentDraftLine?, onDismiss: () -> Unit, onConfirm: (DocumentDraftLine) -> Unit) {
+    var description by rememberSaveable(initial?.description) { mutableStateOf(initial?.description.orEmpty()) }
+    var quantity by rememberSaveable(initial?.quantity) { mutableStateOf(initial?.quantity?.cleanQuantity() ?: "1") }
+    var price by rememberSaveable(initial?.unitPrice) { mutableStateOf(initial?.unitPrice?.toString().orEmpty()) }
+    val qty = quantity.toDoubleOrNull()
+    val amount = price.toLongOrNull()
+    val valid = description.isNotBlank() && qty != null && qty > 0 && amount != null && amount >= 0
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (initial == null) "Add item" else "Edit item") },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedTextField(description, { description = it.take(300) }, Modifier.fillMaxWidth(), label = { Text("Description") }, minLines = 2)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(quantity, { quantity = it.filter { char -> char.isDigit() || char == '.' }.take(8) }, Modifier.weight(1f), label = { Text("Qty") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
+                OutlinedTextField(price, { price = it.filter(Char::isDigit).take(12) }, Modifier.weight(2f), label = { Text("Unit price") }, prefix = { Text("UGX ") }, visualTransformation = AmountGroupingVisualTransformation, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+            }
+            if (valid) Text("Line total ${formatUgx((qty * amount).roundToLong())}", color = MoneyGreen700, fontWeight = FontWeight.Bold)
+            else Text("Enter a description, positive quantity, and valid unit price.", color = Error700, style = MaterialTheme.typography.bodySmall)
+        } },
+        confirmButton = { Button({ onConfirm(DocumentDraftLine(description.trim(), requireNotNull(qty), requireNotNull(amount))) }, enabled = valid) { Text(if (initial == null) "Add item" else "Save changes") } },
+        dismissButton = { TextButton(onDismiss) { Text("Cancel") } },
+    )
+}
+
+internal fun upsertDocumentLine(lines: List<DocumentDraftLine>, index: Int?, line: DocumentDraftLine): List<DocumentDraftLine> =
+    if (index == null || index !in lines.indices) lines + line else lines.toMutableList().apply { this[index] = line }
 
 @Composable private fun ConvertDialog(receipt:Boolean,onDismiss:()->Unit,onConfirm:(String?,String)->Unit){var method by remember{mutableStateOf(if(receipt)"cash" else "")};var ref by remember{mutableStateOf("")};AlertDialog(onDismissRequest=onDismiss,title={Text(if(receipt)"Create receipt" else "Create invoice")},text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){if(receipt){Text("Payment method");Choices(listOf("cash" to "Cash","mobile_money" to "Mobile money","bank" to "Bank","cheque" to "Cheque"),method){method=it};OutlinedTextField(ref,{ref=it.take(100)},label={Text("Payment reference (optional)")})}else Text("The quote’s client, line items, and totals will be copied into a new draft invoice.")}},confirmButton={Button({onConfirm(method.takeIf{it.isNotBlank()},ref)}){Text("Convert")}},dismissButton={TextButton(onDismiss){Text("Cancel")}})}
 @Composable private fun ReasonDialog(title:String,required:Boolean,onDismiss:()->Unit,onConfirm:(String)->Unit){var text by remember{mutableStateOf("")};AlertDialog(onDismissRequest=onDismiss,title={Text(title)},text={OutlinedTextField(text,{text=it.take(500)},label={Text("Reason")},minLines=3)},confirmButton={Button({onConfirm(text)},enabled=!required||text.isNotBlank()){Text("Confirm")}},dismissButton={TextButton(onDismiss){Text("Cancel")}})}

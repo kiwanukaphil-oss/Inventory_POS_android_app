@@ -1,8 +1,10 @@
 package com.kline.inventorypos.app
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import com.google.gson.Gson
 import com.kline.inventorypos.BuildConfig
+import com.kline.inventorypos.R
 import com.kline.inventorypos.data.network.InventoryPosApi
 import com.kline.inventorypos.data.catalog.CatalogRepository
 import com.kline.inventorypos.data.catalog.DefaultCatalogRepository
@@ -138,7 +140,12 @@ class AppContainer(context: Context) {
 
     val expenseRepository: ExpenseRepository = DefaultExpenseRepository(api, gson, sessionRepository::isDemo)
     val approvalRepository: ApprovalRepository = DefaultApprovalRepository(api, gson, sessionRepository::isDemo)
-    val businessDocumentRepository: BusinessDocumentRepository = DefaultBusinessDocumentRepository(api, gson, sessionRepository::isDemo)
+    val businessDocumentRepository: BusinessDocumentRepository = DefaultBusinessDocumentRepository(
+        api = api,
+        gson = gson,
+        isDemo = sessionRepository::isDemo,
+        documentLogo = BitmapFactory.decodeResource(context.resources, R.drawable.kline_logo),
+    )
     val administrationRepository: AdministrationRepository = DefaultAdministrationRepository(api, gson, sessionRepository::isDemo)
     val managementReportRepository: ManagementReportRepository = DefaultManagementReportRepository(api, gson, sessionRepository::isDemo)
 }

@@ -147,7 +147,7 @@ interface InventoryPosApi {
         @Part pdf: MultipartBody.Part,
     ): ApiEnvelope<BusinessDocumentDto>
 
-    @GET("settings/store")
+    @GET("settings/store/operational")
     suspend fun storeConfig(): ApiEnvelope<StoreConfigDto>
 
     @GET("branches")

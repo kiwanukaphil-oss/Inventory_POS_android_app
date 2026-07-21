@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import retrofit2.http.GET
 
 class ApiModelsTest {
     @Test
@@ -226,11 +227,20 @@ class ApiModelsTest {
 
     @Test
     fun businessDocumentLineUsesServerAuthoritativePricingFields() {
-        val request = SaveBusinessDocumentRequest("quotation", "Acacia Ltd", null, "2026-07-21", items = listOf(BusinessDocumentItemRequest("Shirts", 10.0, 125_000)))
+        val request = SaveBusinessDocumentRequest("quotation", "Acacia Ltd", null, "2026-07-21", items = listOf(BusinessDocumentItemRequest("Shirts", 10.0, 125_000), BusinessDocumentItemRequest("Trousers", 5.0, 175_000)))
         val json = Gson().toJson(request)
         assertTrue(json.contains("\"document_type\":\"quotation\""))
         assertTrue(json.contains("\"bill_to_name\":\"Acacia Ltd\""))
         assertTrue(json.contains("\"unit_price\":125000"))
+        assertTrue(json.contains("\"description\":\"Trousers\""))
+        assertEquals(2, Gson().fromJson(json, SaveBusinessDocumentRequest::class.java).items.size)
+    }
+
+    @Test
+    fun documentPdfUsesPermissionSafeOperationalStoreConfig() {
+        val endpoint = InventoryPosApi::class.java.methods.single { it.name == "storeConfig" }.getAnnotation(GET::class.java)
+
+        assertEquals("settings/store/operational", requireNotNull(endpoint).value)
     }
 }
 

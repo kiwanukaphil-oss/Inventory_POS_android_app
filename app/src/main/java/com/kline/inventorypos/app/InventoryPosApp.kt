@@ -506,7 +506,7 @@ private fun AuthenticatedApp(
                         )
                     }
                     DocumentsRoute -> NavEntry(key) {
-                        DocumentScreen(documentState, { documentViewModel.close(); backStack.removeLastOrNull() }, documentViewModel::setType, documentViewModel::setStatus, documentViewModel::setQuery, documentViewModel::search, documentViewModel::refresh, documentViewModel::open, documentViewModel::close, documentViewModel::save, documentViewModel::transition, documentViewModel::void, documentViewModel::convert, documentViewModel::email)
+                        DocumentScreen(documentState, { documentViewModel.close(); backStack.removeLastOrNull() }, documentViewModel::setType, documentViewModel::setStatus, documentViewModel::setQuery, documentViewModel::search, documentViewModel::refresh, documentViewModel::open, documentViewModel::close, documentViewModel::save, documentViewModel::transition, documentViewModel::void, documentViewModel::convert, documentViewModel::email, documentViewModel::preparePdf, documentViewModel::consumePdf, documentViewModel::reportPdfResult)
                     }
                     AdministrationRoute -> NavEntry(key) { AdministrationScreen(administrationState, { backStack.removeLastOrNull() }, administrationViewModel::refresh) }
                     ManagementReportsRoute -> NavEntry(key) { ManagementReportScreen(managementReportState, { backStack.removeLastOrNull() }, managementReportViewModel::setPeriod, managementReportViewModel::refresh) }
