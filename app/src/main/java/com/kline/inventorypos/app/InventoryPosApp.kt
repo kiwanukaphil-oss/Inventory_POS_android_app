@@ -34,6 +34,8 @@ import com.kline.inventorypos.MainActivity
 import com.kline.inventorypos.core.session.PosSession
 import com.kline.inventorypos.feature.activity.ActivityScreen
 import com.kline.inventorypos.feature.activity.ActivityViewModel
+import com.kline.inventorypos.feature.activity.ExchangeWorkflowScreen
+import com.kline.inventorypos.feature.activity.ReturnWorkflowScreen
 import com.kline.inventorypos.feature.auth.BranchSelectionScreen
 import com.kline.inventorypos.feature.auth.LoginScreen
 import com.kline.inventorypos.feature.auth.OpenRegisterScreen
@@ -226,6 +228,8 @@ private fun AuthenticatedApp(
                             onCloseSale = activityViewModel::closeSale,
                             onPrint = { receipt -> activity?.printReceipt(receipt) },
                             onEmail = activityViewModel::emailReceipt,
+                            onReturn = { backStack.add(ReturnSaleRoute) },
+                            onExchange = { backStack.add(ExchangeSaleRoute) },
                         )
                     }
                     SellRoute -> NavEntry(key) {
@@ -324,6 +328,38 @@ private fun AuthenticatedApp(
                                 onNewSale = {
                                     saleViewModel.startNewSale()
                                     selectTopLevel(SellRoute)
+                                },
+                            )
+                        }
+                    }
+                    ReturnSaleRoute -> NavEntry(key) {
+                        activityState.selectedSale?.let { sale ->
+                            ReturnWorkflowScreen(
+                                sale = sale,
+                                state = activityState,
+                                onBack = { activityViewModel.clearAftercare(); backStack.removeLastOrNull() },
+                                onLoad = activityViewModel::loadReturnableItems,
+                                onSubmit = activityViewModel::submitReturn,
+                                onComplete = {
+                                    backStack.removeLastOrNull()
+                                    activityViewModel.finishAftercare()
+                                },
+                            )
+                        }
+                    }
+                    ExchangeSaleRoute -> NavEntry(key) {
+                        activityState.selectedSale?.let { sale ->
+                            ExchangeWorkflowScreen(
+                                sale = sale,
+                                products = inventoryState.products,
+                                state = activityState,
+                                onBack = { activityViewModel.clearAftercare(); backStack.removeLastOrNull() },
+                                onLoad = activityViewModel::loadReturnableItems,
+                                onPreview = activityViewModel::previewExchange,
+                                onSubmit = activityViewModel::submitExchange,
+                                onComplete = {
+                                    backStack.removeLastOrNull()
+                                    activityViewModel.finishAftercare()
                                 },
                             )
                         }

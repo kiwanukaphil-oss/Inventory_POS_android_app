@@ -83,6 +83,18 @@ interface InventoryPosApi {
         @Body request: EmailReceiptRequest,
     ): ApiEnvelope<JsonObject>
 
+    @GET("sales/{saleId}/returnable-items")
+    suspend fun returnableItems(@Path("saleId") saleId: String): ApiEnvelope<List<ReturnableItemDto>>
+
+    @POST("returns")
+    suspend fun createReturn(@Body request: CreateReturnRequest): ReturnMutationResponse
+
+    @POST("exchanges/preview")
+    suspend fun previewExchange(@Body request: ExchangePreviewRequest): ApiEnvelope<ExchangePreviewDto>
+
+    @POST("exchanges")
+    suspend fun createExchange(@Body request: CreateExchangeRequest): ExchangeMutationResponse
+
     @GET("inventory/summary")
     suspend fun inventorySummary(): ApiEnvelope<InventorySummaryDto>
 

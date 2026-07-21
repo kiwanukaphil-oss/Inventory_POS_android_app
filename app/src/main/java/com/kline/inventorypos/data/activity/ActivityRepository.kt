@@ -2,14 +2,24 @@ package com.kline.inventorypos.data.activity
 
 import com.google.gson.Gson
 import com.kline.inventorypos.core.model.ConfirmedReceipt
+import com.kline.inventorypos.core.model.AftercareResult
+import com.kline.inventorypos.core.model.ExchangePreview
+import com.kline.inventorypos.core.model.ExchangeRequest
 import com.kline.inventorypos.core.model.PaymentLeg
 import com.kline.inventorypos.core.model.ReceiptLine
 import com.kline.inventorypos.core.model.SaleSummary
+import com.kline.inventorypos.core.model.ReturnRequest
+import com.kline.inventorypos.core.model.ReturnableItem
 import com.kline.inventorypos.core.model.SampleProducts
 import com.kline.inventorypos.data.network.ApiError
 import com.kline.inventorypos.data.network.EmailReceiptRequest
+import com.kline.inventorypos.data.network.CreateExchangeRequest
+import com.kline.inventorypos.data.network.CreateReturnRequest
+import com.kline.inventorypos.data.network.ExchangeNewItemRequest
+import com.kline.inventorypos.data.network.ExchangePreviewRequest
 import com.kline.inventorypos.data.network.InventoryPosApi
 import com.kline.inventorypos.data.network.ReceiptDto
+import com.kline.inventorypos.data.network.ReturnItemRequest
 import retrofit2.HttpException
 import java.io.IOException
 import java.time.Instant
@@ -19,7 +29,15 @@ interface ActivityRepository {
     suspend fun sales(query: String): List<SaleSummary>
     suspend fun receipt(sale: SaleSummary, branchName: String): ConfirmedReceipt
     suspend fun emailReceipt(receipt: ConfirmedReceipt, email: String)
+    suspend fun returnableItems(sale: SaleSummary): List<ReturnableItem>
+    suspend fun createReturn(request: ReturnRequest): AftercareResult
+    suspend fun previewExchange(request: ExchangeRequest): ExchangePreview
+    suspend fun createExchange(request: ExchangeRequest): AftercareResult
 }
+
+class AftercareUncertainException : IllegalStateException(
+    "The connection ended before confirmation. Do not submit again until you verify this receipt in Activity.",
+)
 
 class DefaultActivityRepository(
     private val api: InventoryPosApi,
@@ -59,6 +77,81 @@ class DefaultActivityRepository(
         if (!isDemo()) apiCall { api.emailReceipt(receipt.saleId, EmailReceiptRequest(email.trim())) }
     }
 
+    override suspend fun returnableItems(sale: SaleSummary): List<ReturnableItem> {
+        if (isDemo()) return demoReturnableItems(sale)
+        return apiCall { api.returnableItems(sale.id).data }.map { dto ->
+            ReturnableItem(
+                saleItemId = dto.id,
+                variantId = dto.variantId,
+                productName = dto.productName,
+                variant = dto.variantAttributes.orEmpty().values.joinToString(" · ").ifBlank { "Standard" },
+                sku = dto.sku,
+                unitPrice = dto.unitPrice.roundToLong(),
+                taxAmount = dto.taxAmount?.roundToLong() ?: 0,
+                originalQuantity = dto.quantity,
+                maxReturnable = dto.maxReturnable,
+            )
+        }
+    }
+
+    override suspend fun createReturn(request: ReturnRequest): AftercareResult {
+        if (isDemo()) return AftercareResult("Return completed", "RET-DEMO-001", "Inventory and sale totals were updated.", request.lines.sumOf { it.estimatedValue })
+        val response = mutationCall {
+            api.createReturn(
+                CreateReturnRequest(
+                    request.saleId,
+                    request.type,
+                    request.reason,
+                    request.notes.takeIf(String::isNotBlank),
+                    request.refundMethod,
+                    request.lines.map { ReturnItemRequest(it.item.saleItemId, it.item.variantId, it.quantity, it.condition) },
+                ),
+            )
+        }
+        return AftercareResult(
+            title = if (request.type == "store_credit") "Store credit issued" else "Refund completed",
+            reference = response.returnNumber ?: "Return recorded",
+            message = response.message ?: "Inventory and sale totals were updated.",
+            amount = response.totalRefund?.roundToLong() ?: request.lines.sumOf { it.estimatedValue },
+        )
+    }
+
+    override suspend fun previewExchange(request: ExchangeRequest): ExchangePreview {
+        if (isDemo()) {
+            val returned = request.returnedLines.sumOf { it.estimatedValue }
+            val replacement = request.newLines.sumOf { it.value }
+            return ExchangePreview(returned, replacement, replacement - returned)
+        }
+        val response = apiCall { api.previewExchange(request.toPreviewRequest()).data }
+        return ExchangePreview(response.returnedValue.roundToLong(), response.newItemsValue.roundToLong(), response.netAmount.roundToLong())
+    }
+
+    override suspend fun createExchange(request: ExchangeRequest): AftercareResult {
+        if (isDemo()) {
+            val net = request.newLines.sumOf { it.value } - request.returnedLines.sumOf { it.estimatedValue }
+            return AftercareResult("Exchange completed", "EX-DEMO-001", "Returned and replacement stock were updated.", net)
+        }
+        val response = mutationCall {
+            api.createExchange(
+                CreateExchangeRequest(
+                    request.saleId,
+                    request.mode,
+                    request.reason,
+                    request.notes.takeIf(String::isNotBlank),
+                    request.returnedLines.toApi(),
+                    request.newLines.map { ExchangeNewItemRequest(it.product.id, it.quantity) },
+                    request.settlementMethod,
+                ),
+            )
+        }
+        return AftercareResult(
+            "Exchange completed",
+            response.newReceiptNumber ?: response.returnNumber ?: "Exchange recorded",
+            response.message ?: "Returned and replacement stock were updated.",
+            response.netAmount?.roundToLong() ?: 0,
+        )
+    }
+
     private suspend fun <T> apiCall(block: suspend () -> T): T = try {
         block()
     } catch (error: HttpException) {
@@ -69,7 +162,29 @@ class DefaultActivityRepository(
     } catch (error: IOException) {
         throw IllegalStateException("Sales activity is unavailable while offline.", error)
     }
+
+    private suspend fun <T> mutationCall(block: suspend () -> T): T = try {
+        block()
+    } catch (error: HttpException) {
+        val message = error.response()?.errorBody()?.string()?.let { body ->
+            runCatching { gson.fromJson(body, ApiError::class.java).message }.getOrNull()
+        } ?: "The return or exchange was rejected."
+        throw IllegalStateException(message, error)
+    } catch (_: IOException) {
+        throw AftercareUncertainException()
+    }
 }
+
+private fun List<com.kline.inventorypos.core.model.ReturnLine>.toApi() = map {
+    ReturnItemRequest(it.item.saleItemId, it.item.variantId, it.quantity, it.condition)
+}
+
+private fun ExchangeRequest.toPreviewRequest() = ExchangePreviewRequest(
+    saleId = saleId,
+    returnedItems = returnedLines.toApi(),
+    newItems = newLines.map { ExchangeNewItemRequest(it.product.id, it.quantity) },
+    exchangeMode = mode,
+)
 
 private fun ReceiptDto.toDomain(branchName: String) = ConfirmedReceipt(
     saleId = saleId,
@@ -124,3 +239,9 @@ private fun demoReceipt(sale: SaleSummary, branchName: String): ConfirmedReceipt
         payments = listOf(PaymentLeg(sale.paymentMethod, sale.total)),
     )
 }
+
+private fun demoReturnableItems(sale: SaleSummary): List<ReturnableItem> = SampleProducts
+    .take(sale.itemCount.coerceIn(1, 4))
+    .mapIndexed { index, product ->
+        ReturnableItem("demo-item-${sale.id}-$index", product.id, product.name, product.variant, product.sku, product.price, 0, 1, 1)
+    }

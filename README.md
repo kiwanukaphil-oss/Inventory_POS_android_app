@@ -41,8 +41,9 @@ saved receiving drafts, transfer lifecycle controls, approval-aware selling
 price changes, price history, and auditable EAN-13 label batch printing through
 the Android system print service.
 
-Phase 5 begins with a real branch-scoped Activity workspace for receipt search,
-sale detail, cashier and salesperson attribution, reprinting, and receipt email.
+Phase 5 now includes a branch-scoped Activity workspace for receipt search,
+sale detail, attribution, reprinting, receipt email, and guided return/exchange
+workflows with server-authoritative values and financial retry safeguards.
 
 To connect a debug build to a backend running on this computer over USB:
 

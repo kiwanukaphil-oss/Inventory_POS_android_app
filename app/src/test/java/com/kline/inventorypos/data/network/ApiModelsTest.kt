@@ -63,4 +63,34 @@ class ApiModelsTest {
         assertEquals("Grace Akello", response.data.single().staffName)
         assertEquals("KLM-42", response.data.single().receiptNumber)
     }
+
+    @Test
+    fun returnRequestUsesBackendSnakeCaseContract() {
+        val request = CreateReturnRequest(
+            "sale-1", "refund", "defective", "Seam split", "original_payment",
+            listOf(ReturnItemRequest("item-1", "variant-1", 1, "defective")),
+        )
+
+        val json = Gson().toJson(request)
+
+        assertTrue(json.contains("\"original_sale_id\":\"sale-1\""))
+        assertTrue(json.contains("\"quantity_returned\":1"))
+        assertTrue(json.contains("\"refund_method\":\"original_payment\""))
+    }
+
+    @Test
+    fun exchangeRequestPreservesExplicitSettlementCode() {
+        val request = CreateExchangeRequest(
+            "sale-1", "return_and_resale", "wrong_size", null,
+            listOf(ReturnItemRequest("item-1", "variant-1", 1, "sellable")),
+            listOf(ExchangeNewItemRequest("variant-2", 1)),
+            "mtn_mobile_money",
+        )
+
+        val json = Gson().toJson(request)
+
+        assertTrue(json.contains("\"exchange_mode\":\"return_and_resale\""))
+        assertTrue(json.contains("\"settlement_method\":\"mtn_mobile_money\""))
+        assertTrue(json.contains("\"new_items\""))
+    }
 }

@@ -390,11 +390,15 @@ audit records, and the corresponding web views.
 
 ### Phase 5 — Sales aftercare and customer accounts
 
-**Implementation status:** first Android slice complete on 21 July 2026:
+**Implementation status:** sales aftercare slices complete on 21 July 2026:
 branch-scoped sales search, completed/return filters, canonical receipt detail,
-cashier and salesperson attribution, Android reprint, and safe email resend.
-Return/exchange mutations and customer account workspaces remain in the next
-Phase 5 slices.
+cashier and salesperson attribution, Android reprint, safe email resend, and
+permission-gated return/exchange workflows. Returns capture quantities,
+condition, reason, refund/store-credit resolution, and drawer/customer gates.
+Exchanges capture returned and replacement items, use the server preview as the
+authoritative value difference, and require a valid settlement before commit.
+Ambiguous network failures are blocked from blind retry and must be verified in
+Activity. Customer account workspaces remain in the next Phase 5 slice.
 
 **Deliverables**
 

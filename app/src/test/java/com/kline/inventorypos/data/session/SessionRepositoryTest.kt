@@ -9,6 +9,13 @@ import com.kline.inventorypos.data.network.CategoryDto
 import com.kline.inventorypos.data.network.CurrentUserResponse
 import com.kline.inventorypos.data.network.CartValidationResponse
 import com.kline.inventorypos.data.network.CreateSaleRequest
+import com.kline.inventorypos.data.network.CreateReturnRequest
+import com.kline.inventorypos.data.network.CreateExchangeRequest
+import com.kline.inventorypos.data.network.ReturnMutationResponse
+import com.kline.inventorypos.data.network.ExchangeMutationResponse
+import com.kline.inventorypos.data.network.ReturnableItemDto
+import com.kline.inventorypos.data.network.ExchangePreviewRequest
+import com.kline.inventorypos.data.network.ExchangePreviewDto
 import com.kline.inventorypos.data.network.EmailReceiptRequest
 import com.kline.inventorypos.data.network.CustomerDto
 import com.kline.inventorypos.data.network.DiscountDto
@@ -106,6 +113,10 @@ private object NoNetworkApi : InventoryPosApi {
     override suspend fun sales(search: String?, page: Int, limit: Int): SalesListResponse = error("Network should not be used")
     override suspend fun receipt(id: String): ApiEnvelope<ReceiptDto> = error("Network should not be used")
     override suspend fun emailReceipt(saleId: String, request: EmailReceiptRequest): ApiEnvelope<JsonObject> = error("Network should not be used")
+    override suspend fun returnableItems(saleId: String): ApiEnvelope<List<ReturnableItemDto>> = error("Network should not be used")
+    override suspend fun createReturn(request: CreateReturnRequest): ReturnMutationResponse = error("Network should not be used")
+    override suspend fun previewExchange(request: ExchangePreviewRequest): ApiEnvelope<ExchangePreviewDto> = error("Network should not be used")
+    override suspend fun createExchange(request: CreateExchangeRequest): ExchangeMutationResponse = error("Network should not be used")
     override suspend fun inventorySummary(): ApiEnvelope<InventorySummaryDto> = error("Network should not be used")
     override suspend fun stockMovements(movementType: String?, limit: Int, offset: Int): StockMovementsResponse = error("Network should not be used")
     override suspend fun adjustStock(request: StockAdjustmentRequest): InventoryMutationResponseDto = error("Network should not be used")

@@ -522,6 +522,77 @@ data class EmailReceiptRequest(
     val customerName: String? = null,
 )
 
+data class ReturnableItemDto(
+    val id: String,
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("product_name") val productName: String,
+    @SerializedName("variant_attributes") val variantAttributes: Map<String, String>?,
+    val sku: String,
+    @SerializedName("unit_price") val unitPrice: Double,
+    @SerializedName("tax_amount") val taxAmount: Double?,
+    val quantity: Int,
+    @SerializedName("max_returnable") val maxReturnable: Int,
+)
+
+data class ReturnItemRequest(
+    @SerializedName("original_sale_item_id") val originalSaleItemId: String,
+    @SerializedName("variant_id") val variantId: String,
+    @SerializedName("quantity_returned") val quantityReturned: Int,
+    val condition: String,
+)
+
+data class CreateReturnRequest(
+    @SerializedName("original_sale_id") val originalSaleId: String,
+    @SerializedName("return_type") val returnType: String,
+    @SerializedName("return_reason") val returnReason: String,
+    @SerializedName("return_notes") val returnNotes: String?,
+    @SerializedName("refund_method") val refundMethod: String?,
+    val items: List<ReturnItemRequest>,
+)
+
+data class ReturnMutationResponse(
+    val success: Boolean,
+    @SerializedName("return_number") val returnNumber: String?,
+    @SerializedName("total_refund") val totalRefund: Double?,
+    val message: String?,
+)
+
+data class ExchangeNewItemRequest(
+    @SerializedName("variant_id") val variantId: String,
+    val quantity: Int,
+)
+
+data class ExchangePreviewRequest(
+    @SerializedName("sale_id") val saleId: String,
+    @SerializedName("returned_items") val returnedItems: List<ReturnItemRequest>,
+    @SerializedName("new_items") val newItems: List<ExchangeNewItemRequest>,
+    @SerializedName("exchange_mode") val exchangeMode: String,
+)
+
+data class ExchangePreviewDto(
+    @SerializedName("returned_value") val returnedValue: Double,
+    @SerializedName("new_items_value") val newItemsValue: Double,
+    @SerializedName("net_amount") val netAmount: Double,
+)
+
+data class CreateExchangeRequest(
+    @SerializedName("original_sale_id") val originalSaleId: String,
+    @SerializedName("exchange_mode") val exchangeMode: String,
+    @SerializedName("return_reason") val returnReason: String,
+    @SerializedName("return_notes") val returnNotes: String?,
+    @SerializedName("returned_items") val returnedItems: List<ReturnItemRequest>,
+    @SerializedName("new_items") val newItems: List<ExchangeNewItemRequest>,
+    @SerializedName("settlement_method") val settlementMethod: String?,
+)
+
+data class ExchangeMutationResponse(
+    val success: Boolean,
+    @SerializedName("return_number") val returnNumber: String?,
+    @SerializedName("new_receipt_number") val newReceiptNumber: String?,
+    @SerializedName("net_amount") val netAmount: Double?,
+    val message: String?,
+)
+
 fun UserDto.toDomain(): PosUser = PosUser(
     id = id,
     username = username,

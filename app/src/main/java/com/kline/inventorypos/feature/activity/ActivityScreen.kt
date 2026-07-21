@@ -82,6 +82,8 @@ fun ActivityScreen(
     onCloseSale: () -> Unit,
     onPrint: (ConfirmedReceipt) -> Unit,
     onEmail: (String) -> Unit,
+    onReturn: (SaleSummary) -> Unit,
+    onExchange: (SaleSummary) -> Unit,
 ) {
     if (state.selectedSale != null) {
         SaleDetailScreen(
@@ -89,9 +91,12 @@ fun ActivityScreen(
             receipt = state.receipt,
             loading = state.detailLoading,
             working = state.working,
+            canRefund = state.canRefund && saleCanReturn(state.selectedSale),
             onBack = onCloseSale,
             onPrint = onPrint,
             onEmail = onEmail,
+            onReturn = { onReturn(state.selectedSale) },
+            onExchange = { onExchange(state.selectedSale) },
         )
         return
     }
@@ -185,9 +190,12 @@ private fun SaleDetailScreen(
     receipt: ConfirmedReceipt?,
     loading: Boolean,
     working: Boolean,
+    canRefund: Boolean,
     onBack: () -> Unit,
     onPrint: (ConfirmedReceipt) -> Unit,
     onEmail: (String) -> Unit,
+    onReturn: () -> Unit,
+    onExchange: () -> Unit,
 ) {
     var showEmail by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -248,7 +256,14 @@ private fun SaleDetailScreen(
                 }
             }
             Surface(shadowElevation = 8.dp) {
-                Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (canRefund) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = onReturn, modifier = Modifier.weight(1f)) { Text("Return") }
+                            Button(onClick = onExchange, modifier = Modifier.weight(1f)) { Text("Exchange") }
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { onPrint(receipt) }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Outlined.Print, contentDescription = null)
                         Text("  Reprint")
@@ -256,6 +271,7 @@ private fun SaleDetailScreen(
                     Button(onClick = { showEmail = true }, modifier = Modifier.weight(1f), enabled = !working) {
                         Icon(Icons.Outlined.AlternateEmail, contentDescription = null)
                         Text("  Email")
+                    }
                     }
                 }
             }
@@ -269,6 +285,9 @@ private fun SaleDetailScreen(
         )
     }
 }
+
+private fun saleCanReturn(sale: SaleSummary): Boolean =
+    sale.returnStatus != "full" && sale.status != "fully_refunded"
 
 @Composable
 private fun AttributionRow(label: String, value: String) {
