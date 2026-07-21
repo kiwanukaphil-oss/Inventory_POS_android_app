@@ -40,11 +40,17 @@ import com.kline.inventorypos.data.session.SessionRepository
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 class AppContainer(context: Context) {
     private val gson = Gson()
     private val headers = SessionHeaders()
     private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .callTimeout(45, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(false)
         .addInterceptor { chain ->
             val request = chain.request().newBuilder().apply {
                 headers.token?.takeUnless { it == "inventory-pos-local-demo" }?.let {

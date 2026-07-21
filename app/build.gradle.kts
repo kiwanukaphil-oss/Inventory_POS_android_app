@@ -1,9 +1,16 @@
+import java.io.File
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+val releaseStorePath = providers.gradleProperty("INVENTORY_POS_RELEASE_STORE_FILE").orNull
+val releaseStorePassword = providers.gradleProperty("INVENTORY_POS_RELEASE_STORE_PASSWORD").orNull
+val releaseKeyAlias = providers.gradleProperty("INVENTORY_POS_RELEASE_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.gradleProperty("INVENTORY_POS_RELEASE_KEY_PASSWORD").orNull
 
 android {
     namespace = "com.kline.inventorypos"
@@ -21,6 +28,19 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"https://api.invalid/\"")
     }
 
+    val releaseSigning = if (listOf(releaseStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }) {
+        signingConfigs.create("release") {
+            storeFile = file(requireNotNull(releaseStorePath))
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = true
+        }
+    } else null
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -30,11 +50,29 @@ android {
                 .get()
             buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         }
+        create("staging") {
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            resValue("string", "app_name", "Inventory POS (Staging)")
+            val apiBaseUrl = providers.gradleProperty("INVENTORY_POS_STAGING_API_URL")
+                .orElse("https://staging-api.invalid/")
+                .get()
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            matchingFallbacks += listOf("release", "debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+        }
         release {
             val apiBaseUrl = providers.gradleProperty("INVENTORY_POS_API_URL")
                 .orElse("https://api.invalid/")
                 .get()
             buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+            signingConfig = releaseSigning
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -57,6 +95,37 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+}
+
+val verifyReleaseConfiguration by tasks.registering {
+    group = "verification"
+    description = "Rejects release builds without an HTTPS API endpoint and complete signing credentials."
+    inputs.property("apiUrl", providers.gradleProperty("INVENTORY_POS_API_URL").orElse(""))
+    inputs.property("storePath", providers.gradleProperty("INVENTORY_POS_RELEASE_STORE_FILE").orElse(""))
+    inputs.property("storePassword", providers.gradleProperty("INVENTORY_POS_RELEASE_STORE_PASSWORD").orElse(""))
+    inputs.property("keyAlias", providers.gradleProperty("INVENTORY_POS_RELEASE_KEY_ALIAS").orElse(""))
+    inputs.property("keyPassword", providers.gradleProperty("INVENTORY_POS_RELEASE_KEY_PASSWORD").orElse(""))
+    doLast {
+        val values = inputs.properties.mapValues { it.value.toString() }
+        val apiUrl = values.getValue("apiUrl")
+        require(apiUrl.isNotBlank() && apiUrl.startsWith("https://") && !apiUrl.contains(".invalid")) {
+            "Set INVENTORY_POS_API_URL to the approved HTTPS production API endpoint."
+        }
+        val requiredSigningValues = mapOf(
+            "INVENTORY_POS_RELEASE_STORE_FILE" to values.getValue("storePath"),
+            "INVENTORY_POS_RELEASE_STORE_PASSWORD" to values.getValue("storePassword"),
+            "INVENTORY_POS_RELEASE_KEY_ALIAS" to values.getValue("keyAlias"),
+            "INVENTORY_POS_RELEASE_KEY_PASSWORD" to values.getValue("keyPassword"),
+        )
+        val missing = requiredSigningValues.filterValues { it.isNullOrBlank() }.keys
+        require(missing.isEmpty()) { "Missing release signing properties: ${missing.joinToString()}" }
+        val storePath = values.getValue("storePath")
+        require(File(storePath).isFile) { "Release keystore does not exist: $storePath" }
+    }
+}
+
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(verifyReleaseConfiguration)
 }
 
 kotlin {

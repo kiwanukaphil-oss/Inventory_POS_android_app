@@ -6,5 +6,8 @@ local.properties
 *.iml
 captures/
 *.hprof
+*.jks
+*.keystore
+signing.properties
 .DS_Store
 Thumbs.db
