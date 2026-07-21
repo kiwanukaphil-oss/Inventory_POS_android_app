@@ -143,6 +143,15 @@ interface InventoryPosApi {
     @GET("staff/active")
     suspend fun activeStaff(): ApiEnvelope<List<StaffDto>>
 
+    @GET("reports/sales/period")
+    suspend fun periodSales(@Query("start_date") startDate: String, @Query("end_date") endDate: String, @Query("group_by") groupBy: String = "day"): ApiEnvelope<PeriodSalesDto>
+
+    @GET("reports/financial/income-statement")
+    suspend fun incomeStatement(@Query("from") from: String, @Query("to") to: String): ApiEnvelope<IncomeStatementDto>
+
+    @GET("reports/financial/cash-flow")
+    suspend fun cashFlow(@Query("from") from: String, @Query("to") to: String): ApiEnvelope<CashFlowDto>
+
     @GET("products/variants")
     suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>>
 

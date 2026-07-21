@@ -375,6 +375,43 @@ data class StaffDto(
     @SerializedName("is_active") val isActive: Boolean,
 )
 
+data class PeriodSalesDto(
+    val period: ReportPeriodDto,
+    val summary: PeriodSalesSummaryDto,
+    @SerializedName("daily_breakdown") val dailyBreakdown: List<DailySalesPointDto>?,
+)
+data class ReportPeriodDto(@SerializedName("start_date") val startDate: String?, @SerializedName("end_date") val endDate: String?, val from: String?, val to: String?)
+data class PeriodSalesSummaryDto(
+    @SerializedName("total_transactions") val totalTransactions: Int,
+    @SerializedName("gross_revenue") val grossRevenue: Double?,
+    @SerializedName("total_returns") val totalReturns: Double?,
+    @SerializedName("net_revenue") val netRevenue: Double?,
+    @SerializedName("total_discounts") val totalDiscounts: Double?,
+    @SerializedName("total_tax") val totalTax: Double?,
+    @SerializedName("average_sale") val averageSale: Double?,
+    @SerializedName("unique_customers") val uniqueCustomers: Int?,
+)
+data class DailySalesPointDto(
+    @SerializedName("sale_day") val saleDay: String,
+    @SerializedName("transaction_count") val transactionCount: Int,
+    @SerializedName("daily_net_revenue") val dailyNetRevenue: Double?,
+    @SerializedName("daily_gross_revenue") val dailyGrossRevenue: Double?,
+)
+data class IncomeStatementDto(
+    val revenue: FinancialRevenueDto,
+    val cogs: Double,
+    @SerializedName("gross_profit") val grossProfit: Double,
+    @SerializedName("gross_margin_pct") val grossMarginPct: Double?,
+    @SerializedName("operating_expenses") val operatingExpenses: OperatingExpensesDto,
+    @SerializedName("net_profit") val netProfit: Double,
+    @SerializedName("net_margin_pct") val netMarginPct: Double?,
+)
+data class FinancialRevenueDto(@SerializedName("net_revenue") val netRevenue: Double, @SerializedName("transaction_count") val transactionCount: Int)
+data class OperatingExpensesDto(val total: Double, @SerializedName("by_category") val byCategory: List<ExpenseCategoryTotalDto>?)
+data class ExpenseCategoryTotalDto(val id: String, val name: String, val total: Double, @SerializedName("entry_count") val entryCount: Int)
+data class CashFlowDto(val inflows: CashFlowSideDto, val outflows: CashFlowSideDto, @SerializedName("net_cash_flow") val netCashFlow: Double)
+data class CashFlowSideDto(val sales: Double?, val prepaid: Double?, val credit: Double?, val refunds: Double?, val purchases: Double?, val expenses: Double?, val total: Double)
+
 data class CatalogVariantDto(
     val id: String,
     val sku: String,

@@ -62,6 +62,9 @@ import com.kline.inventorypos.data.network.VoidDocumentRequest
 import com.kline.inventorypos.data.network.ConvertDocumentRequest
 import com.kline.inventorypos.data.network.StoreConfigDto
 import com.kline.inventorypos.data.network.StaffDto
+import com.kline.inventorypos.data.network.PeriodSalesDto
+import com.kline.inventorypos.data.network.IncomeStatementDto
+import com.kline.inventorypos.data.network.CashFlowDto
 import com.kline.inventorypos.data.network.DiscountDto
 import com.kline.inventorypos.data.network.HeldCartDto
 import com.kline.inventorypos.data.network.HoldCartRequest
@@ -186,6 +189,9 @@ private object NoNetworkApi : InventoryPosApi {
     override suspend fun storeConfig(): ApiEnvelope<StoreConfigDto> = error("Network should not be used")
     override suspend fun branches(includeInactive: Boolean): ApiEnvelope<List<BranchDto>> = error("Network should not be used")
     override suspend fun activeStaff(): ApiEnvelope<List<StaffDto>> = error("Network should not be used")
+    override suspend fun periodSales(startDate: String, endDate: String, groupBy: String): ApiEnvelope<PeriodSalesDto> = error("Network should not be used")
+    override suspend fun incomeStatement(from: String, to: String): ApiEnvelope<IncomeStatementDto> = error("Network should not be used")
+    override suspend fun cashFlow(from: String, to: String): ApiEnvelope<CashFlowDto> = error("Network should not be used")
     override suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>> = error("Network should not be used")
     override suspend fun variantByBarcode(barcode: String): ApiEnvelope<CatalogVariantDto> = error("Network should not be used")
     override suspend fun categories(): ApiEnvelope<List<CategoryDto>> = error("Network should not be used")

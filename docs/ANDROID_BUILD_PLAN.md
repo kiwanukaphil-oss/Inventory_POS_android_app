@@ -445,15 +445,18 @@ locks ambiguous decisions until the affected business record is explicitly
 verified. The business-document workspace adds quotation, invoice, and
 corporate-receipt discovery, manual line-item authoring, draft editing,
 validated lifecycle transitions, quote-to-invoice and invoice-to-receipt
-conversion, linked-document history, and reasoned voiding. Broader period
-reports and administration remain in subsequent Phase 6 slices; document PDF
-email remains gated on completing the native PDF rendering/upload contract.
+conversion, linked-document history, and reasoned voiding. Document PDF email
+remains gated on completing the native PDF rendering/upload contract.
 
 The first administration slice provides permission-scoped store, tax, returns,
 receipt/printer, branch, and active-team visibility. Destructive role/user
 changes and printer endpoint edits remain intentionally outside the phone until
 the production identity policy and supported printer/network models are
 confirmed.
+
+The broader management-report slice adds permission-independent sales and
+financial loading, selectable operational periods, daily sales, profit and
+margin review, expense-category contribution, and cash-flow totals.
 
 **Deliverables**
 

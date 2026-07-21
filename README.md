@@ -74,6 +74,10 @@ store identity, tax and returns policy, receipt/printer configuration, branch
 status, and active-team visibility. Infrastructure-sensitive printer changes
 remain read-only until the target hardware and connection mode are confirmed.
 
+Reports now include selectable daily, seven-day, thirty-day, and month-to-date
+management views for sales, returns, discounts, tax, customer reach, daily
+performance, profitability, operating expenses, margins, and cash flow.
+
 To connect a debug build to a backend running on this computer over USB:
 
 ```powershell

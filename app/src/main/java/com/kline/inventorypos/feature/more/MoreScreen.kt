@@ -69,6 +69,7 @@ fun MoreScreen(
     onApprovals: () -> Unit,
     onDocuments: () -> Unit,
     onAdministration: () -> Unit,
+    onReports: () -> Unit,
 ) {
     val groups = listOf(
         "Customers & growth" to listOf(
@@ -84,7 +85,7 @@ fun MoreScreen(
             MenuItem("Business documents", "Quotes, invoices and receipts", Icons.Outlined.BusinessCenter, "documents.view"),
         ),
         "Insights & administration" to listOf(
-            MenuItem("Reports", "Daily sales and payment performance", Icons.Outlined.Assessment, "reports.sales"),
+            MenuItem("Reports", "Sales, profit, expenses and cash flow", Icons.Outlined.Assessment, "reports.sales", "reports.financial"),
             MenuItem("Settings & team", "Branches, users, tax and printers", Icons.Outlined.Settings, "settings.view", "users.view"),
         ),
     ).map { (title, items) -> title to items.filter {
@@ -113,11 +114,12 @@ fun MoreScreen(
                                 if (item.title == "Customers") onCustomers()
                                 else if (item.title == "Gift vouchers") onGiftVouchers()
                                 else if (item.title == "Cash book") onCash()
-                                else if (item.title == "End of day" || item.title == "Reports") onReconciliation()
+                                else if (item.title == "End of day") onReconciliation()
                                 else if (item.title == "Expenses") onExpenses()
                                 else if (item.title == "Approvals") onApprovals()
                                 else if (item.title == "Business documents") onDocuments()
                                 else if (item.title == "Settings & team") onAdministration()
+                                else if (item.title == "Reports") onReports()
                                 else onMessage("${item.title} opens as a permission-aware workspace")
                             }
                             if (index != items.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 56.dp).background(Slate100).size(height = 1.dp, width = 340.dp))

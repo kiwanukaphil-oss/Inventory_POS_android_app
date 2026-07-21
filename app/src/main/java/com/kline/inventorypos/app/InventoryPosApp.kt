@@ -52,6 +52,8 @@ import com.kline.inventorypos.feature.document.DocumentScreen
 import com.kline.inventorypos.feature.document.DocumentViewModel
 import com.kline.inventorypos.feature.administration.AdministrationScreen
 import com.kline.inventorypos.feature.administration.AdministrationViewModel
+import com.kline.inventorypos.feature.report.ManagementReportScreen
+import com.kline.inventorypos.feature.report.ManagementReportViewModel
 import com.kline.inventorypos.feature.auth.BranchSelectionScreen
 import com.kline.inventorypos.feature.auth.LoginScreen
 import com.kline.inventorypos.feature.auth.OpenRegisterScreen
@@ -100,6 +102,7 @@ fun InventoryPosApp(
     approvalViewModel: ApprovalViewModel,
     documentViewModel: DocumentViewModel,
     administrationViewModel: AdministrationViewModel,
+    managementReportViewModel: ManagementReportViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val stage = uiState.stage) {
@@ -139,6 +142,7 @@ fun InventoryPosApp(
             approvalViewModel = approvalViewModel,
             documentViewModel = documentViewModel,
             administrationViewModel = administrationViewModel,
+            managementReportViewModel = managementReportViewModel,
             onChangeBranch = viewModel::changeBranch,
             onOpenRegister = viewModel::requestRegister,
             onRegisterClosed = viewModel::registerClosed,
@@ -161,6 +165,7 @@ private fun AuthenticatedApp(
     approvalViewModel: ApprovalViewModel,
     documentViewModel: DocumentViewModel,
     administrationViewModel: AdministrationViewModel,
+    managementReportViewModel: ManagementReportViewModel,
     onChangeBranch: () -> Unit,
     onOpenRegister: () -> Unit,
     onRegisterClosed: () -> Unit,
@@ -178,6 +183,7 @@ private fun AuthenticatedApp(
     val approvalState by approvalViewModel.uiState.collectAsStateWithLifecycle()
     val documentState by documentViewModel.uiState.collectAsStateWithLifecycle()
     val administrationState by administrationViewModel.uiState.collectAsStateWithLifecycle()
+    val managementReportState by managementReportViewModel.uiState.collectAsStateWithLifecycle()
     val latestSaleState = rememberUpdatedState(saleState)
     val backStack = remember { mutableStateListOf<Any>(HomeRoute) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -218,6 +224,7 @@ private fun AuthenticatedApp(
         if (session.user.hasPermission("documents.view")) documentViewModel.bindSession(session)
     }
     LaunchedEffect(session.user.id, session.branch.id) { administrationViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id) { managementReportViewModel.bindSession(session) }
     LaunchedEffect(saleState.message) {
         saleState.message?.let { message(it); saleViewModel.consumeMessage() }
     }
@@ -280,6 +287,7 @@ private fun AuthenticatedApp(
     LaunchedEffect(documentState.message) { documentState.message?.let { message(it); documentViewModel.consumeMessage() } }
     LaunchedEffect(documentState.error) { documentState.error?.let { message(it); documentViewModel.clearError() } }
     LaunchedEffect(administrationState.error) { administrationState.error?.let { message(it); administrationViewModel.clearError() } }
+    LaunchedEffect(managementReportState.error) { managementReportState.error?.let { message(it); managementReportViewModel.clearError() } }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -386,6 +394,7 @@ private fun AuthenticatedApp(
                             onApprovals = { backStack.add(ApprovalsRoute) },
                             onDocuments = { backStack.add(DocumentsRoute) },
                             onAdministration = { backStack.add(AdministrationRoute) },
+                            onReports = { backStack.add(ManagementReportsRoute) },
                         )
                     }
                     CustomersRoute -> NavEntry(key) {
@@ -481,6 +490,7 @@ private fun AuthenticatedApp(
                         DocumentScreen(documentState, { documentViewModel.close(); backStack.removeLastOrNull() }, documentViewModel::setType, documentViewModel::setStatus, documentViewModel::setQuery, documentViewModel::search, documentViewModel::refresh, documentViewModel::open, documentViewModel::close, documentViewModel::save, documentViewModel::transition, documentViewModel::void, documentViewModel::convert)
                     }
                     AdministrationRoute -> NavEntry(key) { AdministrationScreen(administrationState, { backStack.removeLastOrNull() }, administrationViewModel::refresh) }
+                    ManagementReportsRoute -> NavEntry(key) { ManagementReportScreen(managementReportState, { backStack.removeLastOrNull() }, managementReportViewModel::setPeriod, managementReportViewModel::refresh) }
                     CartRoute -> NavEntry(key) {
                         val currentSale = latestSaleState.value
                         PersistentCartScreen(
