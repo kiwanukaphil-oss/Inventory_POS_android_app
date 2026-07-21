@@ -68,6 +68,7 @@ fun MoreScreen(
     onExpenses: () -> Unit,
     onApprovals: () -> Unit,
     onDocuments: () -> Unit,
+    onAdministration: () -> Unit,
 ) {
     val groups = listOf(
         "Customers & growth" to listOf(
@@ -84,7 +85,7 @@ fun MoreScreen(
         ),
         "Insights & administration" to listOf(
             MenuItem("Reports", "Daily sales and payment performance", Icons.Outlined.Assessment, "reports.sales"),
-            MenuItem("Settings & team", "Branches, users, roles, tax and printers", Icons.Outlined.Settings, "settings.view"),
+            MenuItem("Settings & team", "Branches, users, tax and printers", Icons.Outlined.Settings, "settings.view", "users.view"),
         ),
     ).map { (title, items) -> title to items.filter {
         it.permission == null || session.user.hasPermission(it.permission) ||
@@ -116,6 +117,7 @@ fun MoreScreen(
                                 else if (item.title == "Expenses") onExpenses()
                                 else if (item.title == "Approvals") onApprovals()
                                 else if (item.title == "Business documents") onDocuments()
+                                else if (item.title == "Settings & team") onAdministration()
                                 else onMessage("${item.title} opens as a permission-aware workspace")
                             }
                             if (index != items.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 56.dp).background(Slate100).size(height = 1.dp, width = 340.dp))

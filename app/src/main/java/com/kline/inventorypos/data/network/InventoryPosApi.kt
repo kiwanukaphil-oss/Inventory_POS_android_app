@@ -134,6 +134,15 @@ interface InventoryPosApi {
     @POST("documents/{id}/convert")
     suspend fun convertBusinessDocument(@Path("id") id: String, @Body request: ConvertDocumentRequest): ApiEnvelope<BusinessDocumentDto>
 
+    @GET("settings/store")
+    suspend fun storeConfig(): ApiEnvelope<StoreConfigDto>
+
+    @GET("branches")
+    suspend fun branches(@Query("include_inactive") includeInactive: Boolean = true): ApiEnvelope<List<BranchDto>>
+
+    @GET("staff/active")
+    suspend fun activeStaff(): ApiEnvelope<List<StaffDto>>
+
     @GET("products/variants")
     suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>>
 

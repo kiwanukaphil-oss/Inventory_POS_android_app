@@ -449,6 +449,12 @@ conversion, linked-document history, and reasoned voiding. Broader period
 reports and administration remain in subsequent Phase 6 slices; document PDF
 email remains gated on completing the native PDF rendering/upload contract.
 
+The first administration slice provides permission-scoped store, tax, returns,
+receipt/printer, branch, and active-team visibility. Destructive role/user
+changes and printer endpoint edits remain intentionally outside the phone until
+the production identity policy and supported printer/network models are
+confirmed.
+
 **Deliverables**
 
 - Cash movement, handover, close, reconciliation, and Z report

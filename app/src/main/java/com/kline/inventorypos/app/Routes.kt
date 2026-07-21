@@ -18,6 +18,7 @@ data object ReconciliationRoute
 data object ExpensesRoute
 data object ApprovalsRoute
 data object DocumentsRoute
+data object AdministrationRoute
 data object ReceiveStockRoute
 data object TransferStockRoute
 data object PriceManagementRoute

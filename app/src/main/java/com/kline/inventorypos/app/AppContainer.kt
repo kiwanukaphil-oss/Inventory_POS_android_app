@@ -27,6 +27,8 @@ import com.kline.inventorypos.data.operations.DefaultExpenseRepository
 import com.kline.inventorypos.data.operations.ExpenseRepository
 import com.kline.inventorypos.data.document.BusinessDocumentRepository
 import com.kline.inventorypos.data.document.DefaultBusinessDocumentRepository
+import com.kline.inventorypos.data.administration.AdministrationRepository
+import com.kline.inventorypos.data.administration.DefaultAdministrationRepository
 import com.kline.inventorypos.data.sale.DefaultSaleRepository
 import com.kline.inventorypos.data.sale.SaleRepository
 import com.kline.inventorypos.data.session.DefaultSessionRepository
@@ -129,6 +131,7 @@ class AppContainer(context: Context) {
     val expenseRepository: ExpenseRepository = DefaultExpenseRepository(api, gson, sessionRepository::isDemo)
     val approvalRepository: ApprovalRepository = DefaultApprovalRepository(api, gson, sessionRepository::isDemo)
     val businessDocumentRepository: BusinessDocumentRepository = DefaultBusinessDocumentRepository(api, gson, sessionRepository::isDemo)
+    val administrationRepository: AdministrationRepository = DefaultAdministrationRepository(api, gson, sessionRepository::isDemo)
 }
 
 private fun String.ensureTrailingSlash(): String = if (endsWith('/')) this else "$this/"

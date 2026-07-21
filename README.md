@@ -69,6 +69,11 @@ item totals; validated status transitions; quote-to-invoice and
 invoice-to-receipt conversion; linked-document history; and permission-gated
 voiding with a mandatory reason.
 
+The administration overview is also available on mobile with permission-scoped
+store identity, tax and returns policy, receipt/printer configuration, branch
+status, and active-team visibility. Infrastructure-sensitive printer changes
+remain read-only until the target hardware and connection mode are confirmed.
+
 To connect a debug build to a backend running on this computer over USB:
 
 ```powershell

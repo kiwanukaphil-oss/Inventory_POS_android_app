@@ -349,6 +349,32 @@ data class ConvertDocumentRequest(
     @SerializedName("payment_reference") val paymentReference: String? = null,
 )
 
+data class StoreConfigDto(
+    @SerializedName("store_name") val storeName: String?,
+    @SerializedName("address_line1") val addressLine1: String?,
+    val city: String?,
+    val country: String?,
+    val phone: String?,
+    val email: String?,
+    @SerializedName("currency_code") val currencyCode: String?,
+    @SerializedName("tax_enabled") val taxEnabled: Boolean?,
+    @SerializedName("tax_label") val taxLabel: String?,
+    @SerializedName("tax_registration_number") val taxRegistrationNumber: String?,
+    @SerializedName("return_window_days") val returnWindowDays: Int?,
+    @SerializedName("printer_bridge_url") val printerBridgeUrl: String?,
+    @SerializedName("default_receipt_action") val defaultReceiptAction: String?,
+)
+
+data class StaffDto(
+    val id: String,
+    @SerializedName("full_name") val fullName: String,
+    @SerializedName("employee_id") val employeeId: String?,
+    val phone: String?,
+    val email: String?,
+    val position: String?,
+    @SerializedName("is_active") val isActive: Boolean,
+)
+
 data class CatalogVariantDto(
     val id: String,
     val sku: String,
