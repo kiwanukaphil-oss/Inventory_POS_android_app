@@ -87,13 +87,13 @@ object BusinessDocumentPdfRenderer {
 
         val storeTextLeft = if (logo != null) {
             val source = Rect(
-                (logo.width * 0.20f).toInt(),
-                (logo.height * 0.14f).toInt(),
-                (logo.width * 0.80f).toInt(),
-                (logo.height * 0.55f).toInt(),
+                (logo.width * 0.33f).toInt(),
+                (logo.height * 0.153f).toInt(),
+                (logo.width * 0.62f).toInt(),
+                (logo.height * 0.443f).toInt(),
             )
-            canvas.drawBitmap(logo, source, RectF(LEFT, 24f, 158f, 102f), paint)
-            174f
+            canvas.drawBitmap(logo, source, RectF(LEFT, 24f, 124f, 102f), paint)
+            140f
         } else LEFT
         text(store.storeName?.takeIf(String::isNotBlank) ?: "K-Line Men", storeTextLeft, 50f, 17f, bold = true)
         val storeAddress = listOfNotNull(store.addressLine1, store.city, store.country).filter(String::isNotBlank).joinToString(", ")
