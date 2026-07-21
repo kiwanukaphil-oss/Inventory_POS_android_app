@@ -13,6 +13,7 @@ data object ReturnSaleRoute
 data object ExchangeSaleRoute
 data object CustomersRoute
 data object GiftVouchersRoute
+data object CashRoute
 data object ReceiveStockRoute
 data object TransferStockRoute
 data object PriceManagementRoute

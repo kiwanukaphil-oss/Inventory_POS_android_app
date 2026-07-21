@@ -99,6 +99,12 @@ class AppViewModel(private val repository: SessionRepository) : ViewModel() {
         _uiState.value = AppUiState(SessionStage.OpenRegister(authenticated, ready.session.branch))
     }
 
+    fun registerClosed() {
+        val ready = _uiState.value.stage as? SessionStage.Ready ?: return
+        _uiState.value = AppUiState(SessionStage.Ready(ready.session.copy(register = null)))
+        viewModelScope.launch { repository.markRegisterClosed() }
+    }
+
     fun logout() {
         viewModelScope.launch {
             repository.logout()

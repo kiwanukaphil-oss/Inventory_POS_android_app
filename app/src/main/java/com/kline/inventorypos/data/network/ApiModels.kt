@@ -65,6 +65,89 @@ data class CashDrawerDto(
     @SerializedName("opening_float") val openingFloat: Double?,
     @SerializedName("opened_at") val openedAt: String?,
     @SerializedName("running_total") val runningTotal: Double?,
+    @SerializedName("opened_by_name") val openedByName: String? = null,
+    @SerializedName("expected_closing") val expectedClosing: Double? = null,
+    @SerializedName("actual_closing") val actualClosing: Double? = null,
+    val variance: Double? = null,
+    @SerializedName("variance_note") val varianceNote: String? = null,
+    val status: String? = null,
+    @SerializedName("closed_at") val closedAt: String? = null,
+)
+
+data class CloseCashDrawerRequest(
+    @SerializedName("actual_closing") val actualClosing: Long,
+    val notes: String? = null,
+    @SerializedName("variance_note") val varianceNote: String? = null,
+)
+
+data class HandoverCashDrawerRequest(
+    @SerializedName("outgoing_session_id") val outgoingSessionId: String,
+    @SerializedName("counted_amount") val countedAmount: Long,
+    @SerializedName("incoming_user_id") val incomingUserId: String,
+    @SerializedName("variance_note") val varianceNote: String?,
+)
+
+data class HandoverCashDrawerDto(
+    @SerializedName("closed_session") val closedSession: CashDrawerDto,
+    @SerializedName("new_session") val newSession: CashDrawerDto,
+)
+
+data class CashMovementTotalDto(
+    @SerializedName("transaction_type") val transactionType: String,
+    @SerializedName("movement_type") val movementType: String,
+    val count: Int,
+    val total: Double,
+)
+
+data class CashSessionSummaryDto(
+    val session: CashDrawerDto,
+    val movements: List<CashMovementTotalDto>,
+    val expected: Double,
+)
+
+data class CashMovementDto(
+    val id: String,
+    @SerializedName("transaction_type") val transactionType: String,
+    @SerializedName("movement_type") val movementType: String,
+    val amount: Double,
+    val category: String?,
+    @SerializedName("reference_number") val referenceNumber: String?,
+    @SerializedName("processed_by_name") val processedByName: String?,
+    val notes: String?,
+    @SerializedName("transaction_date") val transactionDate: String,
+)
+
+data class CashMovementsDataDto(val movements: List<CashMovementDto>, val total: Int)
+
+data class CashBookSummaryDto(
+    @SerializedName("total_inflows") val totalInflows: Double?,
+    @SerializedName("total_outflows") val totalOutflows: Double?,
+    @SerializedName("net_movement") val netMovement: Double?,
+    @SerializedName("movement_count") val movementCount: Int?,
+    val breakdown: List<CashMovementTotalDto>?,
+)
+
+data class RecordCashMovementRequest(
+    @SerializedName("transaction_type") val transactionType: String,
+    @SerializedName("movement_type") val movementType: String,
+    val amount: Long,
+    val notes: String,
+    val category: String?,
+    @SerializedName("customer_id") val customerId: String? = null,
+)
+
+data class CashMovementMutationResponse(
+    val success: Boolean,
+    val status: String?,
+    val message: String?,
+    val data: JsonObject,
+)
+
+data class CashStaffDto(
+    val id: String,
+    val username: String,
+    @SerializedName("full_name") val fullName: String?,
+    @SerializedName("is_active") val isActive: Boolean?,
 )
 
 data class CatalogVariantDto(

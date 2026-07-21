@@ -50,6 +50,10 @@ Gift vouchers can be issued as controlled drafts, activated after payment,
 verified by code or camera scan, redeemed, cancelled, and cash-refunded with
 drawer and uncertain-result safeguards.
 
+Phase 6 begins with a permission-aware cash workspace: daily movements and
+totals, manual cash entries, blind drawer close, atomic handover, variance, and
+the final server-authoritative Z-summary.
+
 To connect a debug build to a backend running on this computer over USB:
 
 ```powershell

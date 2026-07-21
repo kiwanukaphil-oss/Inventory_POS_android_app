@@ -59,7 +59,7 @@ class ActivityViewModel(private val repository: ActivityRepository) : ViewModel(
     private var refreshJob: Job? = null
 
     fun bindSession(session: PosSession) {
-        val key = "${session.user.id}:${session.branch.id}"
+        val key = "${session.user.id}:${session.branch.id}:${session.register?.id}"
         if (sessionKey == key) return
         sessionKey = key
         _uiState.value = ActivityUiState(

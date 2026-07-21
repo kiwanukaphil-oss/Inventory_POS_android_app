@@ -43,7 +43,7 @@ class GiftVoucherViewModel(private val repository: GiftVoucherRepository) : View
     private var searchJob: Job? = null
 
     fun bindSession(session: PosSession) {
-        val key = "${session.user.id}:${session.branch.id}"
+        val key = "${session.user.id}:${session.branch.id}:${session.register?.id}"
         if (key == sessionKey) return
         sessionKey = key
         _uiState.value = GiftVoucherUiState(

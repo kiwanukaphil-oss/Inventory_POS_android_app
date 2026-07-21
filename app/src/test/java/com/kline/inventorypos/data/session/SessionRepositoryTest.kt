@@ -35,6 +35,15 @@ import com.kline.inventorypos.data.network.ActivateGiftVoucherRequest
 import com.kline.inventorypos.data.network.ValidateGiftVoucherRequest
 import com.kline.inventorypos.data.network.RedeemGiftVoucherRequest
 import com.kline.inventorypos.data.network.CancelGiftVoucherRequest
+import com.kline.inventorypos.data.network.CloseCashDrawerRequest
+import com.kline.inventorypos.data.network.HandoverCashDrawerRequest
+import com.kline.inventorypos.data.network.HandoverCashDrawerDto
+import com.kline.inventorypos.data.network.CashSessionSummaryDto
+import com.kline.inventorypos.data.network.CashMovementsDataDto
+import com.kline.inventorypos.data.network.CashBookSummaryDto
+import com.kline.inventorypos.data.network.RecordCashMovementRequest
+import com.kline.inventorypos.data.network.CashMovementMutationResponse
+import com.kline.inventorypos.data.network.CashStaffDto
 import com.kline.inventorypos.data.network.DiscountDto
 import com.kline.inventorypos.data.network.HeldCartDto
 import com.kline.inventorypos.data.network.HoldCartRequest
@@ -77,6 +86,18 @@ import org.junit.Test
 
 class SessionRepositoryTest {
     @Test
+    fun closedDemoRegisterDoesNotReappear() = runBlocking {
+        val repository = DefaultSessionRepository(NoNetworkApi, MemoryStore(), SessionHeaders(), Gson())
+        repository.startDemo()
+        repository.selectBranch("branch-main")
+        repository.openRegister(100_000)
+
+        repository.markRegisterClosed()
+
+        assertNull(repository.activeRegister())
+    }
+
+    @Test
     fun demoRegistersAreScopedToSelectedBranch() = runBlocking {
         val headers = SessionHeaders()
         val repository = DefaultSessionRepository(NoNetworkApi, MemoryStore(), headers, Gson())
@@ -114,6 +135,13 @@ private object NoNetworkApi : InventoryPosApi {
     override suspend fun myBranches(): ApiEnvelope<MyBranchesDto> = error("Network should not be used")
     override suspend fun activeDrawer(): ApiEnvelope<CashDrawerDto?> = error("Network should not be used")
     override suspend fun openDrawer(request: OpenDrawerRequest): ApiEnvelope<CashDrawerDto> = error("Network should not be used")
+    override suspend fun closeDrawer(id: String, request: CloseCashDrawerRequest): ApiEnvelope<CashDrawerDto> = error("Network should not be used")
+    override suspend fun cashDrawerSummary(id: String): ApiEnvelope<CashSessionSummaryDto> = error("Network should not be used")
+    override suspend fun handoverDrawer(request: HandoverCashDrawerRequest): ApiEnvelope<HandoverCashDrawerDto> = error("Network should not be used")
+    override suspend fun cashMovements(startDate: String, endDate: String, page: Int, limit: Int): ApiEnvelope<CashMovementsDataDto> = error("Network should not be used")
+    override suspend fun cashBookSummary(startDate: String, endDate: String): ApiEnvelope<CashBookSummaryDto> = error("Network should not be used")
+    override suspend fun recordCashMovement(request: RecordCashMovementRequest): CashMovementMutationResponse = error("Network should not be used")
+    override suspend fun cashStaff(includeInactive: Boolean): ApiEnvelope<List<CashStaffDto>> = error("Network should not be used")
     override suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>> = error("Network should not be used")
     override suspend fun variantByBarcode(barcode: String): ApiEnvelope<CatalogVariantDto> = error("Network should not be used")
     override suspend fun categories(): ApiEnvelope<List<CategoryDto>> = error("Network should not be used")

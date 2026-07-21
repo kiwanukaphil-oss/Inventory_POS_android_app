@@ -50,6 +50,7 @@ private data class MenuItem(
     val subtitle: String,
     val icon: ImageVector,
     val permission: String? = null,
+    val alternativePermission: String? = null,
 )
 
 @Composable
@@ -60,6 +61,7 @@ fun MoreScreen(
     onMessage: (String) -> Unit,
     onCustomers: () -> Unit,
     onGiftVouchers: () -> Unit,
+    onCash: () -> Unit,
 ) {
     val groups = listOf(
         "Customers & growth" to listOf(
@@ -68,14 +70,17 @@ fun MoreScreen(
         ),
         "Operations" to listOf(
             MenuItem("Products & catalog", "Products, variants, brands and categories", Icons.Outlined.Inventory2, "products.view"),
-            MenuItem("Cash book", "Movements, handover and Z report", Icons.Outlined.Payments, "cash.view"),
+            MenuItem("Cash book", "Movements, handover and Z report", Icons.Outlined.Payments, "cash.view", "sales.create"),
             MenuItem("Business documents", "Quotes, invoices and receipts", Icons.Outlined.BusinessCenter, "documents.view"),
         ),
         "Insights & administration" to listOf(
             MenuItem("Reports", "Branch-aware performance insights", Icons.Outlined.Assessment, "reports.view"),
             MenuItem("Settings & team", "Branches, users, roles, tax and printers", Icons.Outlined.Settings, "settings.view"),
         ),
-    ).map { (title, items) -> title to items.filter { it.permission == null || session.user.hasPermission(it.permission) } }
+    ).map { (title, items) -> title to items.filter {
+        it.permission == null || session.user.hasPermission(it.permission) ||
+            it.alternativePermission?.let(session.user::hasPermission) == true
+    } }
         .filter { it.second.isNotEmpty() }
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -97,6 +102,7 @@ fun MoreScreen(
                             MenuRow(item) {
                                 if (item.title == "Customers") onCustomers()
                                 else if (item.title == "Gift vouchers") onGiftVouchers()
+                                else if (item.title == "Cash book") onCash()
                                 else onMessage("${item.title} opens as a permission-aware workspace")
                             }
                             if (index != items.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 56.dp).background(Slate100).size(height = 1.dp, width = 340.dp))

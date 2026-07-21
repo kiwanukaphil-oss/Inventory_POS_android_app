@@ -168,6 +168,27 @@ class ApiModelsTest {
         assertTrue(json.contains("\"reason\":\"Duplicate issue\""))
         assertTrue(json.contains("\"refund\":true"))
     }
+
+    @Test
+    fun drawerCloseAndHandoverPreserveBlindCountContract() {
+        val closeJson = Gson().toJson(CloseCashDrawerRequest(645_000, varianceNote = "Counted twice"))
+        val handoverJson = Gson().toJson(HandoverCashDrawerRequest("drawer-1", 645_000, "user-2", "Shift change"))
+
+        assertTrue(closeJson.contains("\"actual_closing\":645000"))
+        assertTrue(closeJson.contains("\"variance_note\":\"Counted twice\""))
+        assertTrue(handoverJson.contains("\"outgoing_session_id\":\"drawer-1\""))
+        assertTrue(handoverJson.contains("\"counted_amount\":645000"))
+        assertTrue(handoverJson.contains("\"incoming_user_id\":\"user-2\""))
+    }
+
+    @Test
+    fun manualCashMovementUsesAuditedDirectionAndTypeFields() {
+        val json = Gson().toJson(RecordCashMovementRequest("petty_cash", "outflow", 15_000, "Courier fare", "Transport"))
+
+        assertTrue(json.contains("\"transaction_type\":\"petty_cash\""))
+        assertTrue(json.contains("\"movement_type\":\"outflow\""))
+        assertTrue(json.contains("\"amount\":15000"))
+    }
 }
 
 private data class CustomerPurchasesEnvelopeForTest(val success: Boolean, val data: CustomerPurchaseHistoryDto)

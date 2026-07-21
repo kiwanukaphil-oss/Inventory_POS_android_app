@@ -25,6 +25,32 @@ interface InventoryPosApi {
     @POST("cash-drawer/open")
     suspend fun openDrawer(@Body request: OpenDrawerRequest): ApiEnvelope<CashDrawerDto>
 
+    @POST("cash-drawer/{id}/close")
+    suspend fun closeDrawer(@Path("id") id: String, @Body request: CloseCashDrawerRequest): ApiEnvelope<CashDrawerDto>
+
+    @GET("cash-drawer/{id}/summary")
+    suspend fun cashDrawerSummary(@Path("id") id: String): ApiEnvelope<CashSessionSummaryDto>
+
+    @POST("cash-drawer/handover")
+    suspend fun handoverDrawer(@Body request: HandoverCashDrawerRequest): ApiEnvelope<HandoverCashDrawerDto>
+
+    @GET("cash-book/movements")
+    suspend fun cashMovements(
+        @Query("start_date") startDate: String,
+        @Query("end_date") endDate: String,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 100,
+    ): ApiEnvelope<CashMovementsDataDto>
+
+    @GET("cash-book/summary")
+    suspend fun cashBookSummary(@Query("start_date") startDate: String, @Query("end_date") endDate: String): ApiEnvelope<CashBookSummaryDto>
+
+    @POST("cash-book/movements")
+    suspend fun recordCashMovement(@Body request: RecordCashMovementRequest): CashMovementMutationResponse
+
+    @GET("users")
+    suspend fun cashStaff(@Query("include_inactive") includeInactive: Boolean = false): ApiEnvelope<List<CashStaffDto>>
+
     @GET("products/variants")
     suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>>
 

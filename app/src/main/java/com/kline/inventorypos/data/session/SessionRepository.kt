@@ -22,6 +22,7 @@ interface SessionRepository {
     suspend fun selectBranch(branchId: String)
     suspend fun activeRegister(): RegisterSession?
     suspend fun openRegister(openingFloat: Long): RegisterSession
+    suspend fun markRegisterClosed()
     suspend fun logout()
     fun isDemo(): Boolean
 }
@@ -105,6 +106,10 @@ class DefaultSessionRepository(
             }
         }
         return apiCall { api.openDrawer(OpenDrawerRequest(openingFloat)).data.toDomain() }
+    }
+
+    override suspend fun markRegisterClosed() {
+        if (demoMode) headers.branchId?.let(demoRegisters::remove)
     }
 
     override suspend fun logout() {

@@ -40,6 +40,8 @@ import com.kline.inventorypos.feature.customer.CustomerScreen
 import com.kline.inventorypos.feature.customer.CustomerViewModel
 import com.kline.inventorypos.feature.voucher.GiftVoucherScreen
 import com.kline.inventorypos.feature.voucher.GiftVoucherViewModel
+import com.kline.inventorypos.feature.cash.CashScreen
+import com.kline.inventorypos.feature.cash.CashViewModel
 import com.kline.inventorypos.feature.auth.BranchSelectionScreen
 import com.kline.inventorypos.feature.auth.LoginScreen
 import com.kline.inventorypos.feature.auth.OpenRegisterScreen
@@ -82,6 +84,7 @@ fun InventoryPosApp(
     activityViewModel: ActivityViewModel,
     customerViewModel: CustomerViewModel,
     giftVoucherViewModel: GiftVoucherViewModel,
+    cashViewModel: CashViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val stage = uiState.stage) {
@@ -115,8 +118,10 @@ fun InventoryPosApp(
             activityViewModel = activityViewModel,
             customerViewModel = customerViewModel,
             giftVoucherViewModel = giftVoucherViewModel,
+            cashViewModel = cashViewModel,
             onChangeBranch = viewModel::changeBranch,
             onOpenRegister = viewModel::requestRegister,
+            onRegisterClosed = viewModel::registerClosed,
             onLogout = viewModel::logout,
         )
     }
@@ -130,8 +135,10 @@ private fun AuthenticatedApp(
     activityViewModel: ActivityViewModel,
     customerViewModel: CustomerViewModel,
     giftVoucherViewModel: GiftVoucherViewModel,
+    cashViewModel: CashViewModel,
     onChangeBranch: () -> Unit,
     onOpenRegister: () -> Unit,
+    onRegisterClosed: () -> Unit,
     onLogout: () -> Unit,
 ) {
     val activity = LocalActivity.current as? MainActivity
@@ -140,6 +147,7 @@ private fun AuthenticatedApp(
     val activityState by activityViewModel.uiState.collectAsStateWithLifecycle()
     val customerState by customerViewModel.uiState.collectAsStateWithLifecycle()
     val voucherState by giftVoucherViewModel.uiState.collectAsStateWithLifecycle()
+    val cashState by cashViewModel.uiState.collectAsStateWithLifecycle()
     val latestSaleState = rememberUpdatedState(saleState)
     val backStack = remember { mutableStateListOf<Any>(HomeRoute) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -165,11 +173,12 @@ private fun AuthenticatedApp(
         backStack.add(route)
     }
 
-    LaunchedEffect(session.user.id, session.branch.id) { saleViewModel.bindSession(session) }
-    LaunchedEffect(session.user.id, session.branch.id) { inventoryViewModel.bindSession(session) }
-    LaunchedEffect(session.user.id, session.branch.id) { activityViewModel.bindSession(session) }
-    LaunchedEffect(session.user.id, session.branch.id) { customerViewModel.bindSession(session) }
-    LaunchedEffect(session.user.id, session.branch.id) { giftVoucherViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { saleViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { inventoryViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { activityViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { customerViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { giftVoucherViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { cashViewModel.bindSession(session) }
     LaunchedEffect(saleState.message) {
         saleState.message?.let { message(it); saleViewModel.consumeMessage() }
     }
@@ -204,6 +213,12 @@ private fun AuthenticatedApp(
     }
     LaunchedEffect(voucherState.error) {
         voucherState.error?.let { message(it); giftVoucherViewModel.clearError() }
+    }
+    LaunchedEffect(cashState.message) {
+        cashState.message?.let { message(it); cashViewModel.consumeMessage() }
+    }
+    LaunchedEffect(cashState.error) {
+        cashState.error?.let { message(it); cashViewModel.clearError() }
     }
 
     Scaffold(
@@ -305,6 +320,7 @@ private fun AuthenticatedApp(
                             onMessage = ::message,
                             onCustomers = { backStack.add(CustomersRoute) },
                             onGiftVouchers = { backStack.add(GiftVouchersRoute) },
+                            onCash = { backStack.add(CashRoute) },
                         )
                     }
                     CustomersRoute -> NavEntry(key) {
@@ -345,6 +361,21 @@ private fun AuthenticatedApp(
                             onActivate = giftVoucherViewModel::activate,
                             onRedeem = giftVoucherViewModel::redeem,
                             onCancel = giftVoucherViewModel::cancel,
+                        )
+                    }
+                    CashRoute -> NavEntry(key) {
+                        CashScreen(
+                            state = cashState,
+                            onBack = { backStack.removeLastOrNull() },
+                            onRefresh = cashViewModel::refresh,
+                            onOpenRegister = onOpenRegister,
+                            onCloseDrawer = cashViewModel::close,
+                            onHandover = cashViewModel::handover,
+                            onRecordMovement = cashViewModel::recordMovement,
+                            onFinishClose = {
+                                cashViewModel.consumeCloseResult()
+                                onRegisterClosed()
+                            },
                         )
                     }
                     CartRoute -> NavEntry(key) {
