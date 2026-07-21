@@ -38,6 +38,8 @@ import com.kline.inventorypos.feature.activity.ExchangeWorkflowScreen
 import com.kline.inventorypos.feature.activity.ReturnWorkflowScreen
 import com.kline.inventorypos.feature.customer.CustomerScreen
 import com.kline.inventorypos.feature.customer.CustomerViewModel
+import com.kline.inventorypos.feature.voucher.GiftVoucherScreen
+import com.kline.inventorypos.feature.voucher.GiftVoucherViewModel
 import com.kline.inventorypos.feature.auth.BranchSelectionScreen
 import com.kline.inventorypos.feature.auth.LoginScreen
 import com.kline.inventorypos.feature.auth.OpenRegisterScreen
@@ -79,6 +81,7 @@ fun InventoryPosApp(
     inventoryViewModel: InventoryViewModel,
     activityViewModel: ActivityViewModel,
     customerViewModel: CustomerViewModel,
+    giftVoucherViewModel: GiftVoucherViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val stage = uiState.stage) {
@@ -111,6 +114,7 @@ fun InventoryPosApp(
             inventoryViewModel = inventoryViewModel,
             activityViewModel = activityViewModel,
             customerViewModel = customerViewModel,
+            giftVoucherViewModel = giftVoucherViewModel,
             onChangeBranch = viewModel::changeBranch,
             onOpenRegister = viewModel::requestRegister,
             onLogout = viewModel::logout,
@@ -125,6 +129,7 @@ private fun AuthenticatedApp(
     inventoryViewModel: InventoryViewModel,
     activityViewModel: ActivityViewModel,
     customerViewModel: CustomerViewModel,
+    giftVoucherViewModel: GiftVoucherViewModel,
     onChangeBranch: () -> Unit,
     onOpenRegister: () -> Unit,
     onLogout: () -> Unit,
@@ -134,6 +139,7 @@ private fun AuthenticatedApp(
     val inventoryState by inventoryViewModel.uiState.collectAsStateWithLifecycle()
     val activityState by activityViewModel.uiState.collectAsStateWithLifecycle()
     val customerState by customerViewModel.uiState.collectAsStateWithLifecycle()
+    val voucherState by giftVoucherViewModel.uiState.collectAsStateWithLifecycle()
     val latestSaleState = rememberUpdatedState(saleState)
     val backStack = remember { mutableStateListOf<Any>(HomeRoute) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -163,6 +169,7 @@ private fun AuthenticatedApp(
     LaunchedEffect(session.user.id, session.branch.id) { inventoryViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id) { activityViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id) { customerViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id) { giftVoucherViewModel.bindSession(session) }
     LaunchedEffect(saleState.message) {
         saleState.message?.let { message(it); saleViewModel.consumeMessage() }
     }
@@ -191,6 +198,12 @@ private fun AuthenticatedApp(
     }
     LaunchedEffect(customerState.error) {
         customerState.error?.let { message(it); customerViewModel.clearError() }
+    }
+    LaunchedEffect(voucherState.message) {
+        voucherState.message?.let { message(it); giftVoucherViewModel.consumeMessage() }
+    }
+    LaunchedEffect(voucherState.error) {
+        voucherState.error?.let { message(it); giftVoucherViewModel.clearError() }
     }
 
     Scaffold(
@@ -291,6 +304,7 @@ private fun AuthenticatedApp(
                             onLogout = onLogout,
                             onMessage = ::message,
                             onCustomers = { backStack.add(CustomersRoute) },
+                            onGiftVouchers = { backStack.add(GiftVouchersRoute) },
                         )
                     }
                     CustomersRoute -> NavEntry(key) {
@@ -307,6 +321,30 @@ private fun AuthenticatedApp(
                             onClose = customerViewModel::close,
                             onRefreshDetail = customerViewModel::refreshDetail,
                             onAddNote = customerViewModel::addNote,
+                        )
+                    }
+                    GiftVouchersRoute -> NavEntry(key) {
+                        GiftVoucherScreen(
+                            state = voucherState,
+                            onBack = {
+                                giftVoucherViewModel.closeDetail()
+                                backStack.removeLastOrNull()
+                            },
+                            onQuery = giftVoucherViewModel::setQuery,
+                            onStatus = giftVoucherViewModel::setStatus,
+                            onRefresh = giftVoucherViewModel::refresh,
+                            onOpen = giftVoucherViewModel::open,
+                            onCloseDetail = giftVoucherViewModel::closeDetail,
+                            onRefreshDetail = giftVoucherViewModel::refreshDetail,
+                            onScan = {
+                                activity?.scanBarcode(giftVoucherViewModel::verify, ::message)
+                                    ?: message("Barcode scanner is unavailable")
+                            },
+                            onVerify = giftVoucherViewModel::verify,
+                            onCreate = giftVoucherViewModel::create,
+                            onActivate = giftVoucherViewModel::activate,
+                            onRedeem = giftVoucherViewModel::redeem,
+                            onCancel = giftVoucherViewModel::cancel,
                         )
                     }
                     CartRoute -> NavEntry(key) {

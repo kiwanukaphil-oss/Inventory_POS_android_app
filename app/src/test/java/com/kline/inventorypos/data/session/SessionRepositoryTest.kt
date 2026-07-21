@@ -27,6 +27,14 @@ import com.kline.inventorypos.data.network.CustomerContactDto
 import com.kline.inventorypos.data.network.CreateCustomerNoteRequest
 import com.kline.inventorypos.data.network.LoyaltyEntryDto
 import com.kline.inventorypos.data.network.StoreCreditSummaryDto
+import com.kline.inventorypos.data.network.GiftVoucherTemplateDto
+import com.kline.inventorypos.data.network.GiftVoucherListResponse
+import com.kline.inventorypos.data.network.GiftVoucherDto
+import com.kline.inventorypos.data.network.CreateGiftVoucherRequest
+import com.kline.inventorypos.data.network.ActivateGiftVoucherRequest
+import com.kline.inventorypos.data.network.ValidateGiftVoucherRequest
+import com.kline.inventorypos.data.network.RedeemGiftVoucherRequest
+import com.kline.inventorypos.data.network.CancelGiftVoucherRequest
 import com.kline.inventorypos.data.network.DiscountDto
 import com.kline.inventorypos.data.network.HeldCartDto
 import com.kline.inventorypos.data.network.HoldCartRequest
@@ -120,6 +128,14 @@ private object NoNetworkApi : InventoryPosApi {
     override suspend fun customerContacts(id: String): ApiEnvelope<List<CustomerContactDto>> = error("Network should not be used")
     override suspend fun customerLoyalty(id: String, limit: Int): ApiEnvelope<List<LoyaltyEntryDto>> = error("Network should not be used")
     override suspend fun customerStoreCredit(id: String): ApiEnvelope<StoreCreditSummaryDto> = error("Network should not be used")
+    override suspend fun giftVoucherTemplates(active: Boolean): ApiEnvelope<List<GiftVoucherTemplateDto>> = error("Network should not be used")
+    override suspend fun giftVouchers(search: String?, status: String?, page: Int, limit: Int): GiftVoucherListResponse = error("Network should not be used")
+    override suspend fun giftVoucher(id: String): ApiEnvelope<GiftVoucherDto> = error("Network should not be used")
+    override suspend fun createGiftVoucher(request: CreateGiftVoucherRequest): ApiEnvelope<GiftVoucherDto> = error("Network should not be used")
+    override suspend fun activateGiftVoucher(id: String, request: ActivateGiftVoucherRequest): ApiEnvelope<GiftVoucherDto> = error("Network should not be used")
+    override suspend fun validateGiftVoucher(request: ValidateGiftVoucherRequest): ApiEnvelope<GiftVoucherDto> = error("Network should not be used")
+    override suspend fun redeemGiftVoucher(id: String, request: RedeemGiftVoucherRequest): ApiEnvelope<GiftVoucherDto> = error("Network should not be used")
+    override suspend fun cancelGiftVoucher(id: String, request: CancelGiftVoucherRequest): ApiEnvelope<GiftVoucherDto> = error("Network should not be used")
     override suspend fun evaluatePromotions(request: PromotionEvaluationRequest): ApiEnvelope<PromotionEvaluationDto> = error("Network should not be used")
     override suspend fun discounts(activeOnly: Boolean): ApiEnvelope<List<DiscountDto>> = error("Network should not be used")
     override suspend fun heldCarts(): ApiEnvelope<List<HeldCartDto>> = error("Network should not be used")

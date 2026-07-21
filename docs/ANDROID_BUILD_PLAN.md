@@ -403,7 +403,12 @@ filters, profile and business contacts, branch purchase history, credit aging,
 unified account statement, prepaid/store-credit balances, loyalty history, and
 permission-gated internal notes. Credit payments, prepaid deposits/withdrawals,
 and loyalty adjustments remain intentionally deferred until their backend
-mutations support idempotency. Gift vouchers remain the next Phase 5 slice.
+mutations support idempotency. Gift voucher management is complete with
+branch-scoped search and status filters, template-based unpaid draft issuance,
+camera/manual verification, exact-value activation, balance-checked redemption,
+cancellation, and drawer-gated cash refunds. Because voucher mutations also
+lack idempotency keys, ambiguous results are locked until staff refresh and
+verify the canonical voucher record.
 
 **Deliverables**
 

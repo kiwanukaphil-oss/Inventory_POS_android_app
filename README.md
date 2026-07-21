@@ -46,6 +46,9 @@ sale detail, attribution, reprinting, receipt email, and guided return/exchange
 workflows with server-authoritative values and financial retry safeguards.
 The More workspace now opens mobile customer accounts with contacts, purchase
 history, balances, aging, statements, loyalty activity, and internal notes.
+Gift vouchers can be issued as controlled drafts, activated after payment,
+verified by code or camera scan, redeemed, cancelled, and cash-refunded with
+drawer and uncertain-result safeguards.
 
 To connect a debug build to a backend running on this computer over USB:
 

@@ -135,6 +135,39 @@ class ApiModelsTest {
         assertEquals("KLM-42", response.data.data.single().receiptNumber)
         assertEquals(525000.0, response.data.data.single().netAmount)
     }
+
+    @Test
+    fun giftVoucherIssueAndActivationUseExactBackendFields() {
+        val issue = CreateGiftVoucherRequest(
+            templateId = "template-1",
+            recipientName = "Amina Nakato",
+            fromName = "David",
+            message = "Enjoy",
+            phoneNumber = "+256700000001",
+            originalAmount = 500_000,
+            expiryDate = "2027-01-01",
+            notes = null,
+        )
+        val activation = ActivateGiftVoucherRequest(
+            listOf(GiftVoucherPaymentRequest("mtn_mobile_money", 500_000, "MM-42")),
+        )
+
+        val issueJson = Gson().toJson(issue)
+        val activationJson = Gson().toJson(activation)
+
+        assertTrue(issueJson.contains("\"template_id\":\"template-1\""))
+        assertTrue(issueJson.contains("\"original_amount\":500000"))
+        assertTrue(activationJson.contains("\"method\":\"mtn_mobile_money\""))
+        assertTrue(activationJson.contains("\"amount\":500000"))
+    }
+
+    @Test
+    fun voucherCancellationRefundFlagIsExplicit() {
+        val json = Gson().toJson(CancelGiftVoucherRequest("Duplicate issue", true))
+
+        assertTrue(json.contains("\"reason\":\"Duplicate issue\""))
+        assertTrue(json.contains("\"refund\":true"))
+    }
 }
 
 private data class CustomerPurchasesEnvelopeForTest(val success: Boolean, val data: CustomerPurchaseHistoryDto)

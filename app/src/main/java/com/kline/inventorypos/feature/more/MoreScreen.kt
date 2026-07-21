@@ -59,6 +59,7 @@ fun MoreScreen(
     onLogout: () -> Unit,
     onMessage: (String) -> Unit,
     onCustomers: () -> Unit,
+    onGiftVouchers: () -> Unit,
 ) {
     val groups = listOf(
         "Customers & growth" to listOf(
@@ -95,6 +96,7 @@ fun MoreScreen(
                         items.forEachIndexed { index, item ->
                             MenuRow(item) {
                                 if (item.title == "Customers") onCustomers()
+                                else if (item.title == "Gift vouchers") onGiftVouchers()
                                 else onMessage("${item.title} opens as a permission-aware workspace")
                             }
                             if (index != items.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 56.dp).background(Slate100).size(height = 1.dp, width = 340.dp))

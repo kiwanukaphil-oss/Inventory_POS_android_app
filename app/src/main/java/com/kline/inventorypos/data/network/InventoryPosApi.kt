@@ -73,6 +73,35 @@ interface InventoryPosApi {
     @GET("customers/{id}/store-credit-summary")
     suspend fun customerStoreCredit(@Path("id") id: String): ApiEnvelope<StoreCreditSummaryDto>
 
+    @GET("gift-vouchers/templates")
+    suspend fun giftVoucherTemplates(@Query("active") active: Boolean = true): ApiEnvelope<List<GiftVoucherTemplateDto>>
+
+    @GET("gift-vouchers")
+    suspend fun giftVouchers(
+        @Query("search") search: String? = null,
+        @Query("status") status: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 50,
+    ): GiftVoucherListResponse
+
+    @GET("gift-vouchers/{id}")
+    suspend fun giftVoucher(@Path("id") id: String): ApiEnvelope<GiftVoucherDto>
+
+    @POST("gift-vouchers")
+    suspend fun createGiftVoucher(@Body request: CreateGiftVoucherRequest): ApiEnvelope<GiftVoucherDto>
+
+    @POST("gift-vouchers/{id}/activate")
+    suspend fun activateGiftVoucher(@Path("id") id: String, @Body request: ActivateGiftVoucherRequest): ApiEnvelope<GiftVoucherDto>
+
+    @POST("gift-vouchers/validate")
+    suspend fun validateGiftVoucher(@Body request: ValidateGiftVoucherRequest): ApiEnvelope<GiftVoucherDto>
+
+    @POST("gift-vouchers/{id}/redeem")
+    suspend fun redeemGiftVoucher(@Path("id") id: String, @Body request: RedeemGiftVoucherRequest): ApiEnvelope<GiftVoucherDto>
+
+    @POST("gift-vouchers/{id}/cancel")
+    suspend fun cancelGiftVoucher(@Path("id") id: String, @Body request: CancelGiftVoucherRequest): ApiEnvelope<GiftVoucherDto>
+
     @POST("promotions/evaluate")
     suspend fun evaluatePromotions(@Body request: PromotionEvaluationRequest): ApiEnvelope<PromotionEvaluationDto>
 

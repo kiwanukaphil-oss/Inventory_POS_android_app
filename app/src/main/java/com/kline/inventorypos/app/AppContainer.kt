@@ -15,6 +15,8 @@ import com.kline.inventorypos.data.activity.ActivityRepository
 import com.kline.inventorypos.data.activity.DefaultActivityRepository
 import com.kline.inventorypos.data.customer.CustomerRepository
 import com.kline.inventorypos.data.customer.DefaultCustomerRepository
+import com.kline.inventorypos.data.voucher.DefaultGiftVoucherRepository
+import com.kline.inventorypos.data.voucher.GiftVoucherRepository
 import com.kline.inventorypos.data.sale.DefaultSaleRepository
 import com.kline.inventorypos.data.sale.SaleRepository
 import com.kline.inventorypos.data.session.DefaultSessionRepository
@@ -91,6 +93,12 @@ class AppContainer(context: Context) {
     )
 
     val customerRepository: CustomerRepository = DefaultCustomerRepository(
+        api = api,
+        gson = gson,
+        isDemo = sessionRepository::isDemo,
+    )
+
+    val giftVoucherRepository: GiftVoucherRepository = DefaultGiftVoucherRepository(
         api = api,
         gson = gson,
         isDemo = sessionRepository::isDemo,

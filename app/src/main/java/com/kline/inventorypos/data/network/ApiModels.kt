@@ -183,6 +183,74 @@ data class StoreCreditSummaryDto(
     @SerializedName("next_expiry_date") val nextExpiryDate: String?,
 )
 
+data class GiftVoucherTemplateDto(
+    val id: String,
+    val name: String,
+    val description: String?,
+    val category: String?,
+    @SerializedName("is_active") val isActive: Boolean?,
+)
+
+data class GiftVoucherTransactionDto(
+    val id: String,
+    @SerializedName("transaction_type") val transactionType: String,
+    val amount: Double,
+    @SerializedName("balance_after") val balanceAfter: Double,
+    @SerializedName("payment_method") val paymentMethod: String?,
+    val reference: String?,
+    val notes: String?,
+    @SerializedName("created_by_name") val createdByName: String?,
+    @SerializedName("created_at") val createdAt: String,
+)
+
+data class GiftVoucherDto(
+    val id: String,
+    @SerializedName("voucher_code") val voucherCode: String,
+    @SerializedName("template_name") val templateName: String?,
+    @SerializedName("recipient_name") val recipientName: String,
+    @SerializedName("from_name") val fromName: String?,
+    val message: String?,
+    @SerializedName("phone_number") val phoneNumber: String?,
+    @SerializedName("original_amount") val originalAmount: Double,
+    @SerializedName("remaining_balance") val remainingBalance: Double,
+    @SerializedName("issue_date") val issueDate: String?,
+    @SerializedName("expiry_date") val expiryDate: String?,
+    val status: String,
+    @SerializedName("payment_status") val paymentStatus: String,
+    @SerializedName("created_by_name") val createdByName: String?,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("cancel_reason") val cancelReason: String?,
+    val transactions: List<GiftVoucherTransactionDto>?,
+)
+
+data class GiftVoucherListResponse(
+    val success: Boolean,
+    val data: List<GiftVoucherDto>,
+    val pagination: SalesPaginationDto,
+)
+
+data class CreateGiftVoucherRequest(
+    @SerializedName("template_id") val templateId: String,
+    @SerializedName("recipient_name") val recipientName: String,
+    @SerializedName("from_name") val fromName: String?,
+    val message: String?,
+    @SerializedName("phone_number") val phoneNumber: String?,
+    @SerializedName("original_amount") val originalAmount: Long,
+    @SerializedName("expiry_date") val expiryDate: String?,
+    val notes: String?,
+)
+
+data class GiftVoucherPaymentRequest(
+    val method: String,
+    val amount: Long,
+    val reference: String?,
+)
+
+data class ActivateGiftVoucherRequest(val payments: List<GiftVoucherPaymentRequest>, val notes: String? = null)
+data class ValidateGiftVoucherRequest(val code: String? = null, val token: String? = null, val amount: Long? = null)
+data class RedeemGiftVoucherRequest(val amount: Long, @SerializedName("sale_id") val saleId: String? = null, val notes: String? = null)
+data class CancelGiftVoucherRequest(val reason: String, val refund: Boolean)
+
 data class PromotionEvaluationRequest(
     val items: List<PromotionItemRequest>,
     val subtotal: Long,
