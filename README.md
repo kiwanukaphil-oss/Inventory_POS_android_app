@@ -67,7 +67,10 @@ Business documents now provide branch-scoped quote, invoice, and corporate
 receipt search; touch-first manual document creation and draft editing; line
 item totals; validated status transitions; quote-to-invoice and
 invoice-to-receipt conversion; linked-document history; and permission-gated
-voiding with a mandatory reason.
+voiding with a mandatory reason. Documents render as native vector A4 PDFs,
+including multi-page output and void watermarks, and can be emailed with To,
+CC, and a cover note through the server's multipart delivery contract.
+Ambiguous delivery results remain locked for safe recovery.
 
 The administration overview is also available on mobile with permission-scoped
 store identity, tax and returns policy, receipt/printer configuration, branch
@@ -77,6 +80,11 @@ remain read-only until the target hardware and connection mode are confirmed.
 Reports now include selectable daily, seven-day, thirty-day, and month-to-date
 management views for sales, returns, discounts, tax, customer reach, daily
 performance, profitability, operating expenses, margins, and cash flow.
+
+Production hardening, verified capabilities, remaining release inputs, and the
+store acceptance run are documented in
+[`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md) and
+[`docs/PILOT_PLAYBOOK.md`](docs/PILOT_PLAYBOOK.md).
 
 To connect a debug build to a backend running on this computer over USB:
 

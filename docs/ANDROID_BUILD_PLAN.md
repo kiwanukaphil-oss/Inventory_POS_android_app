@@ -470,6 +470,17 @@ reconciliation with matching web totals.
 
 ### Phase 7 — Production hardening and pilot
 
+**Implementation status:** client-side hardening completed on 21 July 2026.
+The app has a fail-closed release configuration, encrypted session storage,
+restricted network security, minified staging build, baseline/startup profiles,
+Room migration coverage, accessibility coverage, automated JVM/lint/build/device
+verification, and a tested debug installation on the target Samsung device.
+The remaining production work depends on externally supplied release URLs,
+signing identity, final product identity, monitoring/privacy decisions, printer
+hardware, backend idempotency confirmation, and a distribution choice. See
+[PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) and
+[PILOT_PLAYBOOK.md](PILOT_PLAYBOOK.md).
+
 **Deliverables**
 
 - Accessibility and adaptive-layout audit

@@ -5,9 +5,15 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
-    groups:
-      android-dependencies:
-        patterns: ["*"]
+    ignore:
+      - dependency-name: "com.android.tools.build:gradle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.jetbrains.kotlin:*"
+        versions: [">= 2.4.0"]
+      - dependency-name: "androidx.core:*"
+        versions: [">= 1.19.0"]
+      - dependency-name: "androidx.lifecycle:*"
+        versions: [">= 2.11.0"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
