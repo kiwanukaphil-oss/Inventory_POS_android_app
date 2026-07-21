@@ -186,6 +186,7 @@ private object NoNetworkApi : InventoryPosApi {
     override suspend fun transitionBusinessDocument(id: String, request: DocumentStatusRequest): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
     override suspend fun voidBusinessDocument(id: String, request: VoidDocumentRequest): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
     override suspend fun convertBusinessDocument(id: String, request: ConvertDocumentRequest): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
+    override suspend fun emailBusinessDocument(id: String, fields: Map<String, okhttp3.RequestBody>, pdf: okhttp3.MultipartBody.Part): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
     override suspend fun storeConfig(): ApiEnvelope<StoreConfigDto> = error("Network should not be used")
     override suspend fun branches(includeInactive: Boolean): ApiEnvelope<List<BranchDto>> = error("Network should not be used")
     override suspend fun activeStaff(): ApiEnvelope<List<StaffDto>> = error("Network should not be used")

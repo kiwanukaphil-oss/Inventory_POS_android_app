@@ -21,6 +21,10 @@ data class BusinessDocument(
     val createdAt: String,
     val items: List<BusinessDocumentItem>,
     val derived: List<DerivedDocument>,
+    val customerEmail: String? = null,
+    val emailedTo: String? = null,
+    val emailedCc: List<String> = emptyList(),
+    val emailedAt: String? = null,
 )
 
 data class BusinessDocumentItem(val id: String, val description: String, val quantity: Double, val unitPrice: Long, val lineTotal: Long)

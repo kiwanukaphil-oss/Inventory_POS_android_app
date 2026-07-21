@@ -283,6 +283,7 @@ data class BusinessDocumentDto(
     @SerializedName("document_number") val documentNumber: String,
     val status: String,
     @SerializedName("customer_id") val customerId: String?,
+    @SerializedName("customer_email") val customerEmail: String?,
     @SerializedName("bill_to_name") val billToName: String,
     @SerializedName("bill_to_address") val billToAddress: String?,
     @SerializedName("document_date") val documentDate: String,
@@ -298,6 +299,9 @@ data class BusinessDocumentDto(
     @SerializedName("void_reason") val voidReason: String?,
     @SerializedName("created_by_name") val createdByName: String?,
     @SerializedName("created_at") val createdAt: String,
+    @SerializedName("emailed_to") val emailedTo: String?,
+    @SerializedName("emailed_cc") val emailedCc: List<String>?,
+    @SerializedName("emailed_at") val emailedAt: String?,
     val items: List<BusinessDocumentItemDto>?,
     @SerializedName("derived_documents") val derivedDocuments: List<DerivedDocumentDto>?,
 )

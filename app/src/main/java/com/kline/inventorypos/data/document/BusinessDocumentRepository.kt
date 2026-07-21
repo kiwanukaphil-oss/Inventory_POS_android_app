@@ -18,6 +18,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.math.roundToLong
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 
 interface BusinessDocumentRepository {
@@ -27,6 +30,7 @@ interface BusinessDocumentRepository {
     suspend fun transition(id: String, status: String): BusinessDocument
     suspend fun void(id: String, reason: String): BusinessDocument
     suspend fun convert(id: String, paymentMethod: String?, paymentReference: String): BusinessDocument
+    suspend fun email(document: BusinessDocument, recipient: String, cc: List<String>, message: String): BusinessDocument
 }
 
 class DocumentMutationUncertainException : IllegalStateException("The connection ended before confirmation. Refresh the document and linked records before attempting another change.")
@@ -60,12 +64,43 @@ class DefaultBusinessDocumentRepository(private val api: InventoryPosApi, privat
         if (isDemo()) { val source = demo.first { it.id == id }; val target = if (source.type == "quotation") "invoice" else "receipt"; val created = source.copy(id = "doc-${UUID.randomUUID()}", type = target, number = "${target.take(3).uppercase()}-${1000 + demo.size}", status = if (target == "receipt") "issued" else "draft", sourceNumber = source.number, paymentMethod = paymentMethod, paymentReference = paymentReference.clean()); demo[demo.indexOf(source)] = source.copy(status = "converted", derived = listOf(DerivedDocument(created.id, target, created.number, created.status))); demo.add(0, created); return created }
         return mutate { api.convertBusinessDocument(id, ConvertDocumentRequest(LocalDate.now().toString(), paymentMethod = paymentMethod, paymentReference = paymentReference.clean())).data }.toDomain()
     }
+    override suspend fun email(document: BusinessDocument, recipient: String, cc: List<String>, message: String): BusinessDocument {
+        val to = recipient.trim()
+        require(EMAIL.matches(to)) { "Enter a valid recipient email address." }
+        val copies = cc.map(String::trim).filter(String::isNotBlank).filterNot { it.equals(to, true) }.distinctBy { it.lowercase() }
+        require(copies.size <= 10 && copies.all(EMAIL::matches)) { "Enter no more than 10 valid CC email addresses." }
+        require(document.status != "void") { "Void documents cannot be emailed." }
+        if (isDemo()) {
+            val updated = document.copy(
+                status = if (document.status == "draft") "sent" else document.status,
+                emailedTo = to,
+                emailedCc = copies,
+                emailedAt = Instant.now().toString(),
+            )
+            demo.indexOfFirst { it.id == document.id }.takeIf { it >= 0 }?.let { demo[it] = updated }
+            return updated
+        }
+        val store = read { api.storeConfig().data }
+        val pdfBytes = BusinessDocumentPdfRenderer.render(document, store)
+        val fields = buildMap {
+            put("to", to.toRequestBody(TEXT_MEDIA_TYPE))
+            message.trim().takeIf(String::isNotBlank)?.let { put("message", it.toRequestBody(TEXT_MEDIA_TYPE)) }
+            if (copies.isNotEmpty()) put("cc", gson.toJson(copies).toRequestBody(TEXT_MEDIA_TYPE))
+        }
+        val filename = document.number.replace(Regex("[^A-Za-z0-9._-]"), "-") + ".pdf"
+        val pdfPart = MultipartBody.Part.createFormData("pdf", filename, pdfBytes.toRequestBody(PDF_MEDIA_TYPE))
+        return mutate { api.emailBusinessDocument(document.id, fields, pdfPart).data }.toDomain()
+    }
     private suspend fun updateDemoOrLive(id: String, live: suspend () -> BusinessDocument, change: (BusinessDocument) -> BusinessDocument): BusinessDocument { if (!isDemo()) return live(); val old = demo.first { it.id == id }; return change(old).also { demo[demo.indexOf(old)] = it } }
     private suspend fun <T> read(block: suspend () -> T): T = try { block() } catch (e: HttpException) { throw e.failure("Documents are unavailable.") } catch (e: IOException) { throw IllegalStateException("Documents are unavailable while offline.", e) }
     private suspend fun <T> mutate(block: suspend () -> T): T = try { block() } catch (e: HttpException) { throw e.failure("The document action was rejected.") } catch (_: IOException) { throw DocumentMutationUncertainException() }
     private fun HttpException.failure(fallback: String) = IllegalStateException(response()?.errorBody()?.string()?.let { runCatching { gson.fromJson(it, ApiError::class.java).message }.getOrNull() } ?: fallback, this)
 }
 
-private fun BusinessDocumentDto.toDomain() = BusinessDocument(id, documentType, documentNumber, status, billToName, billToAddress, documentDate.take(10), validUntil?.take(10), dueDate?.take(10), paymentMethod, paymentReference, subtotal.roundToLong(), total.roundToLong(), notes, sourceDocumentNumber, voidReason, createdByName, createdAt, items.orEmpty().map { BusinessDocumentItem(it.id, it.description, it.quantity, it.unitPrice.roundToLong(), it.lineTotal.roundToLong()) }, derivedDocuments.orEmpty().map { DerivedDocument(it.id, it.documentType, it.documentNumber, it.status) })
+private fun BusinessDocumentDto.toDomain() = BusinessDocument(id, documentType, documentNumber, status, billToName, billToAddress, documentDate.take(10), validUntil?.take(10), dueDate?.take(10), paymentMethod, paymentReference, subtotal.roundToLong(), total.roundToLong(), notes, sourceDocumentNumber, voidReason, createdByName, createdAt, items.orEmpty().map { BusinessDocumentItem(it.id, it.description, it.quantity, it.unitPrice.roundToLong(), it.lineTotal.roundToLong()) }, derivedDocuments.orEmpty().map { DerivedDocument(it.id, it.documentType, it.documentNumber, it.status) }, customerEmail, emailedTo, emailedCc.orEmpty(), emailedAt)
 private fun String.clean() = trim().takeIf(String::isNotBlank)
 private fun demoDocument(id: String, type: String, number: String, status: String, customer: String, total: Long) = BusinessDocument(id, type, number, status, customer, "Kampala", LocalDate.now().toString(), LocalDate.now().plusDays(14).toString(), null, null, null, total, total, "Corporate uniform order", null, null, "Philip Kiwanuka", Instant.now().toString(), listOf(BusinessDocumentItem("l-$id", "Premium cotton shirts", 10.0, total / 10, total)), emptyList())
+
+private val EMAIL = Regex("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", RegexOption.IGNORE_CASE)
+private val TEXT_MEDIA_TYPE = "text/plain; charset=utf-8".toMediaType()
+private val PDF_MEDIA_TYPE = "application/pdf".toMediaType()
