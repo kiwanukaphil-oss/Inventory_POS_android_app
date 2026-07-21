@@ -63,6 +63,7 @@ import com.kline.inventorypos.feature.inventory.InventoryScreen
 import com.kline.inventorypos.feature.inventory.InventoryViewModel
 import com.kline.inventorypos.feature.inventory.LabelPrintScreen
 import com.kline.inventorypos.feature.inventory.PriceManagementScreen
+import com.kline.inventorypos.feature.inventory.ProductCatalogScreen
 import com.kline.inventorypos.feature.inventory.ReceiveStockScreen
 import com.kline.inventorypos.feature.inventory.TransferStockScreen
 import com.kline.inventorypos.feature.more.MoreScreen
@@ -395,6 +396,7 @@ private fun AuthenticatedApp(
                             onDocuments = { backStack.add(DocumentsRoute) },
                             onAdministration = { backStack.add(AdministrationRoute) },
                             onReports = { backStack.add(ManagementReportsRoute) },
+                            onProducts = { backStack.add(ProductCatalogRoute) },
                         )
                     }
                     CustomersRoute -> NavEntry(key) {
@@ -491,6 +493,16 @@ private fun AuthenticatedApp(
                     }
                     AdministrationRoute -> NavEntry(key) { AdministrationScreen(administrationState, { backStack.removeLastOrNull() }, administrationViewModel::refresh) }
                     ManagementReportsRoute -> NavEntry(key) { ManagementReportScreen(managementReportState, { backStack.removeLastOrNull() }, managementReportViewModel::setPeriod, managementReportViewModel::refresh) }
+                    ProductCatalogRoute -> NavEntry(key) {
+                        ProductCatalogScreen(
+                            state = inventoryState,
+                            onBack = { backStack.removeLastOrNull() },
+                            onLoad = inventoryViewModel::loadPricing,
+                            onRefresh = inventoryViewModel::refresh,
+                            onManagePrices = { backStack.add(PriceManagementRoute) },
+                            onPrintLabels = { backStack.add(LabelPrintRoute) },
+                        )
+                    }
                     CartRoute -> NavEntry(key) {
                         val currentSale = latestSaleState.value
                         PersistentCartScreen(

@@ -20,6 +20,7 @@ data object ApprovalsRoute
 data object DocumentsRoute
 data object AdministrationRoute
 data object ManagementReportsRoute
+data object ProductCatalogRoute
 data object ReceiveStockRoute
 data object TransferStockRoute
 data object PriceManagementRoute

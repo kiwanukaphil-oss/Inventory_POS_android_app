@@ -361,6 +361,6 @@ fun LabelPrintScreen(
     }
 }
 
-private fun PricingVariant.marginPercent(): Int? = costPrice?.takeIf { it > 0 }?.let {
+internal fun PricingVariant.marginPercent(): Int? = costPrice?.takeIf { it > 0 }?.let {
     (((price - it).toDouble() / it) * 100).roundToInt()
 }

@@ -70,6 +70,7 @@ fun MoreScreen(
     onDocuments: () -> Unit,
     onAdministration: () -> Unit,
     onReports: () -> Unit,
+    onProducts: () -> Unit,
 ) {
     val groups = listOf(
         "Customers & growth" to listOf(
@@ -111,7 +112,8 @@ fun MoreScreen(
                         )
                         items.forEachIndexed { index, item ->
                             MenuRow(item) {
-                                if (item.title == "Customers") onCustomers()
+                                if (item.title == "Products & catalog") onProducts()
+                                else if (item.title == "Customers") onCustomers()
                                 else if (item.title == "Gift vouchers") onGiftVouchers()
                                 else if (item.title == "Cash book") onCash()
                                 else if (item.title == "End of day") onReconciliation()
