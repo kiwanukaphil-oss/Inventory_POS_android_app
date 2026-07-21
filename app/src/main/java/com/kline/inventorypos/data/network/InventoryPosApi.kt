@@ -6,6 +6,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Query
 import retrofit2.http.Header
 
@@ -50,6 +51,31 @@ interface InventoryPosApi {
 
     @GET("users")
     suspend fun cashStaff(@Query("include_inactive") includeInactive: Boolean = false): ApiEnvelope<List<CashStaffDto>>
+
+    @GET("reconciliation/{date}")
+    suspend fun reconciliation(@Path("date") date: String): ApiEnvelope<ReconciliationDto>
+
+    @POST("reconciliation/open")
+    suspend fun openReconciliation(@Query("date") date: String, @Body body: Map<String, String> = emptyMap()): ApiEnvelope<ReconciliationDto>
+
+    @PUT("reconciliation/{date}/channel/{method}")
+    suspend fun updateReconciliationChannel(
+        @Path("date") date: String,
+        @Path("method") method: String,
+        @Body request: UpdateReconciliationChannelRequest,
+    ): ApiEnvelope<ReconciliationDto>
+
+    @POST("reconciliation/{date}/signoff")
+    suspend fun signOffReconciliation(@Path("date") date: String, @Body request: ReconciliationSignoffRequest): ApiEnvelope<ReconciliationDto>
+
+    @POST("reconciliation/{date}/close")
+    suspend fun closeReconciliation(@Path("date") date: String, @Body body: Map<String, String> = emptyMap()): ApiEnvelope<ReconciliationDto>
+
+    @GET("reports/sales/daily")
+    suspend fun dailySalesSummary(@Query("date") date: String): ApiEnvelope<DailySalesSummaryDto>
+
+    @GET("reports/sales/payment-methods")
+    suspend fun paymentMethodReport(@Query("start_date") startDate: String, @Query("end_date") endDate: String): ApiEnvelope<PaymentMethodReportDto>
 
     @GET("products/variants")
     suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>>

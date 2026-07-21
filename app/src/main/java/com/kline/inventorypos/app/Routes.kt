@@ -14,6 +14,7 @@ data object ExchangeSaleRoute
 data object CustomersRoute
 data object GiftVouchersRoute
 data object CashRoute
+data object ReconciliationRoute
 data object ReceiveStockRoute
 data object TransferStockRoute
 data object PriceManagementRoute

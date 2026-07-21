@@ -150,6 +150,87 @@ data class CashStaffDto(
     @SerializedName("is_active") val isActive: Boolean?,
 )
 
+data class ReconciliationDto(
+    val id: String,
+    @SerializedName("reconciliation_date") val reconciliationDate: String,
+    val status: String,
+    @SerializedName("created_by_name") val createdByName: String?,
+    @SerializedName("closed_by_name") val closedByName: String?,
+    @SerializedName("closed_at") val closedAt: String?,
+    val notes: String?,
+    val channels: List<ReconciliationChannelDto>?,
+    val signoffs: List<ReconciliationSignoffDto>?,
+    @SerializedName("pending_staff") val pendingStaff: List<ReconciliationPendingStaffDto>?,
+)
+
+data class ReconciliationChannelDto(
+    val id: String,
+    @SerializedName("payment_method") val paymentMethod: String,
+    @SerializedName("system_total") val systemTotal: Double,
+    @SerializedName("external_total") val externalTotal: Double?,
+    val charges: Double?,
+    val variance: Double?,
+    @SerializedName("denomination_data") val denominationData: Map<String, Double>?,
+    @SerializedName("discrepancy_note") val discrepancyNote: String?,
+    @SerializedName("verified_by_name") val verifiedByName: String?,
+    @SerializedName("verified_at") val verifiedAt: String?,
+)
+
+data class ReconciliationSignoffDto(
+    val id: String,
+    @SerializedName("user_id") val userId: String,
+    @SerializedName("staff_name") val staffName: String,
+    @SerializedName("confirmed_sales_total") val confirmedSalesTotal: Double,
+    @SerializedName("system_sales_total") val systemSalesTotal: Double,
+    @SerializedName("signed_at") val signedAt: String,
+    val notes: String?,
+)
+
+data class ReconciliationPendingStaffDto(
+    @SerializedName("user_id") val userId: String,
+    @SerializedName("staff_name") val staffName: String,
+    @SerializedName("transaction_count") val transactionCount: Int,
+    @SerializedName("sales_total") val salesTotal: Double,
+)
+
+data class UpdateReconciliationChannelRequest(
+    @SerializedName("external_total") val externalTotal: Long,
+    val charges: Long = 0,
+    @SerializedName("discrepancy_note") val discrepancyNote: String? = null,
+    @SerializedName("denomination_data") val denominationData: Map<String, Long>? = null,
+)
+
+data class ReconciliationSignoffRequest(
+    @SerializedName("confirmed_total") val confirmedTotal: Long,
+    val notes: String? = null,
+)
+
+data class DailySalesSummaryDto(
+    val date: String,
+    @SerializedName("total_transactions") val totalTransactions: Int,
+    @SerializedName("total_revenue") val totalRevenue: Double?,
+    @SerializedName("gross_revenue") val grossRevenue: Double?,
+    @SerializedName("total_returns") val totalReturns: Double?,
+    @SerializedName("net_revenue") val netRevenue: Double?,
+    @SerializedName("total_subtotal") val totalSubtotal: Double?,
+    @SerializedName("total_discounts") val totalDiscounts: Double?,
+    @SerializedName("total_tax") val totalTax: Double?,
+    @SerializedName("average_sale") val averageSale: Double?,
+    @SerializedName("lowest_sale") val lowestSale: Double?,
+    @SerializedName("highest_sale") val highestSale: Double?,
+)
+
+data class PaymentMethodReportDto(
+    @SerializedName("payment_methods") val paymentMethods: List<PaymentMethodItemDto>?,
+)
+
+data class PaymentMethodItemDto(
+    @SerializedName("payment_method") val paymentMethod: String,
+    @SerializedName("transaction_count") val transactionCount: Int,
+    @SerializedName("total_amount") val totalAmount: Double,
+    @SerializedName("percentage_of_total") val percentageOfTotal: Double?,
+)
+
 data class CatalogVariantDto(
     val id: String,
     val sku: String,

@@ -44,6 +44,11 @@ import com.kline.inventorypos.data.network.CashBookSummaryDto
 import com.kline.inventorypos.data.network.RecordCashMovementRequest
 import com.kline.inventorypos.data.network.CashMovementMutationResponse
 import com.kline.inventorypos.data.network.CashStaffDto
+import com.kline.inventorypos.data.network.ReconciliationDto
+import com.kline.inventorypos.data.network.UpdateReconciliationChannelRequest
+import com.kline.inventorypos.data.network.ReconciliationSignoffRequest
+import com.kline.inventorypos.data.network.DailySalesSummaryDto
+import com.kline.inventorypos.data.network.PaymentMethodReportDto
 import com.kline.inventorypos.data.network.DiscountDto
 import com.kline.inventorypos.data.network.HeldCartDto
 import com.kline.inventorypos.data.network.HoldCartRequest
@@ -142,6 +147,13 @@ private object NoNetworkApi : InventoryPosApi {
     override suspend fun cashBookSummary(startDate: String, endDate: String): ApiEnvelope<CashBookSummaryDto> = error("Network should not be used")
     override suspend fun recordCashMovement(request: RecordCashMovementRequest): CashMovementMutationResponse = error("Network should not be used")
     override suspend fun cashStaff(includeInactive: Boolean): ApiEnvelope<List<CashStaffDto>> = error("Network should not be used")
+    override suspend fun reconciliation(date: String): ApiEnvelope<ReconciliationDto> = error("Network should not be used")
+    override suspend fun openReconciliation(date: String, body: Map<String, String>): ApiEnvelope<ReconciliationDto> = error("Network should not be used")
+    override suspend fun updateReconciliationChannel(date: String, method: String, request: UpdateReconciliationChannelRequest): ApiEnvelope<ReconciliationDto> = error("Network should not be used")
+    override suspend fun signOffReconciliation(date: String, request: ReconciliationSignoffRequest): ApiEnvelope<ReconciliationDto> = error("Network should not be used")
+    override suspend fun closeReconciliation(date: String, body: Map<String, String>): ApiEnvelope<ReconciliationDto> = error("Network should not be used")
+    override suspend fun dailySalesSummary(date: String): ApiEnvelope<DailySalesSummaryDto> = error("Network should not be used")
+    override suspend fun paymentMethodReport(startDate: String, endDate: String): ApiEnvelope<PaymentMethodReportDto> = error("Network should not be used")
     override suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>> = error("Network should not be used")
     override suspend fun variantByBarcode(barcode: String): ApiEnvelope<CatalogVariantDto> = error("Network should not be used")
     override suspend fun categories(): ApiEnvelope<List<CategoryDto>> = error("Network should not be used")

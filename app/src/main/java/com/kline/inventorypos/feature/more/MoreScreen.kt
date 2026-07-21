@@ -62,6 +62,7 @@ fun MoreScreen(
     onCustomers: () -> Unit,
     onGiftVouchers: () -> Unit,
     onCash: () -> Unit,
+    onReconciliation: () -> Unit,
 ) {
     val groups = listOf(
         "Customers & growth" to listOf(
@@ -71,10 +72,11 @@ fun MoreScreen(
         "Operations" to listOf(
             MenuItem("Products & catalog", "Products, variants, brands and categories", Icons.Outlined.Inventory2, "products.view"),
             MenuItem("Cash book", "Movements, handover and Z report", Icons.Outlined.Payments, "cash.view", "sales.create"),
+            MenuItem("End of day", "Channel counts, sign-off and daily close", Icons.Outlined.Assessment, "cash.view", "cash.reconcile"),
             MenuItem("Business documents", "Quotes, invoices and receipts", Icons.Outlined.BusinessCenter, "documents.view"),
         ),
         "Insights & administration" to listOf(
-            MenuItem("Reports", "Branch-aware performance insights", Icons.Outlined.Assessment, "reports.view"),
+            MenuItem("Reports", "Daily sales and payment performance", Icons.Outlined.Assessment, "reports.sales"),
             MenuItem("Settings & team", "Branches, users, roles, tax and printers", Icons.Outlined.Settings, "settings.view"),
         ),
     ).map { (title, items) -> title to items.filter {
@@ -103,6 +105,7 @@ fun MoreScreen(
                                 if (item.title == "Customers") onCustomers()
                                 else if (item.title == "Gift vouchers") onGiftVouchers()
                                 else if (item.title == "Cash book") onCash()
+                                else if (item.title == "End of day" || item.title == "Reports") onReconciliation()
                                 else onMessage("${item.title} opens as a permission-aware workspace")
                             }
                             if (index != items.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 56.dp).background(Slate100).size(height = 1.dp, width = 340.dp))

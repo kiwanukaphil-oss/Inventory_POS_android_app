@@ -189,6 +189,23 @@ class ApiModelsTest {
         assertTrue(json.contains("\"movement_type\":\"outflow\""))
         assertTrue(json.contains("\"amount\":15000"))
     }
+
+    @Test
+    fun reconciliationChannelVerificationUsesBackendFields() {
+        val json = Gson().toJson(UpdateReconciliationChannelRequest(555_600, 5_600, "Provider fee and count checked"))
+
+        assertTrue(json.contains("\"external_total\":555600"))
+        assertTrue(json.contains("\"charges\":5600"))
+        assertTrue(json.contains("\"discrepancy_note\":\"Provider fee and count checked\""))
+    }
+
+    @Test
+    fun staffSignoffUsesConfirmedTotalContract() {
+        val json = Gson().toJson(ReconciliationSignoffRequest(2_850_000, "Shift reviewed"))
+
+        assertTrue(json.contains("\"confirmed_total\":2850000"))
+        assertTrue(json.contains("\"notes\":\"Shift reviewed\""))
+    }
 }
 
 private data class CustomerPurchasesEnvelopeForTest(val success: Boolean, val data: CustomerPurchaseHistoryDto)

@@ -42,6 +42,8 @@ import com.kline.inventorypos.feature.voucher.GiftVoucherScreen
 import com.kline.inventorypos.feature.voucher.GiftVoucherViewModel
 import com.kline.inventorypos.feature.cash.CashScreen
 import com.kline.inventorypos.feature.cash.CashViewModel
+import com.kline.inventorypos.feature.reconciliation.ReconciliationScreen
+import com.kline.inventorypos.feature.reconciliation.ReconciliationViewModel
 import com.kline.inventorypos.feature.auth.BranchSelectionScreen
 import com.kline.inventorypos.feature.auth.LoginScreen
 import com.kline.inventorypos.feature.auth.OpenRegisterScreen
@@ -85,6 +87,7 @@ fun InventoryPosApp(
     customerViewModel: CustomerViewModel,
     giftVoucherViewModel: GiftVoucherViewModel,
     cashViewModel: CashViewModel,
+    reconciliationViewModel: ReconciliationViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val stage = uiState.stage) {
@@ -119,6 +122,7 @@ fun InventoryPosApp(
             customerViewModel = customerViewModel,
             giftVoucherViewModel = giftVoucherViewModel,
             cashViewModel = cashViewModel,
+            reconciliationViewModel = reconciliationViewModel,
             onChangeBranch = viewModel::changeBranch,
             onOpenRegister = viewModel::requestRegister,
             onRegisterClosed = viewModel::registerClosed,
@@ -136,6 +140,7 @@ private fun AuthenticatedApp(
     customerViewModel: CustomerViewModel,
     giftVoucherViewModel: GiftVoucherViewModel,
     cashViewModel: CashViewModel,
+    reconciliationViewModel: ReconciliationViewModel,
     onChangeBranch: () -> Unit,
     onOpenRegister: () -> Unit,
     onRegisterClosed: () -> Unit,
@@ -148,6 +153,7 @@ private fun AuthenticatedApp(
     val customerState by customerViewModel.uiState.collectAsStateWithLifecycle()
     val voucherState by giftVoucherViewModel.uiState.collectAsStateWithLifecycle()
     val cashState by cashViewModel.uiState.collectAsStateWithLifecycle()
+    val reconciliationState by reconciliationViewModel.uiState.collectAsStateWithLifecycle()
     val latestSaleState = rememberUpdatedState(saleState)
     val backStack = remember { mutableStateListOf<Any>(HomeRoute) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -179,6 +185,7 @@ private fun AuthenticatedApp(
     LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { customerViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { giftVoucherViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { cashViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id) { reconciliationViewModel.bindSession(session) }
     LaunchedEffect(saleState.message) {
         saleState.message?.let { message(it); saleViewModel.consumeMessage() }
     }
@@ -219,6 +226,12 @@ private fun AuthenticatedApp(
     }
     LaunchedEffect(cashState.error) {
         cashState.error?.let { message(it); cashViewModel.clearError() }
+    }
+    LaunchedEffect(reconciliationState.message) {
+        reconciliationState.message?.let { message(it); reconciliationViewModel.consumeMessage() }
+    }
+    LaunchedEffect(reconciliationState.error) {
+        reconciliationState.error?.let { message(it); reconciliationViewModel.clearError() }
     }
 
     Scaffold(
@@ -321,6 +334,7 @@ private fun AuthenticatedApp(
                             onCustomers = { backStack.add(CustomersRoute) },
                             onGiftVouchers = { backStack.add(GiftVouchersRoute) },
                             onCash = { backStack.add(CashRoute) },
+                            onReconciliation = { backStack.add(ReconciliationRoute) },
                         )
                     }
                     CustomersRoute -> NavEntry(key) {
@@ -376,6 +390,20 @@ private fun AuthenticatedApp(
                                 cashViewModel.consumeCloseResult()
                                 onRegisterClosed()
                             },
+                        )
+                    }
+                    ReconciliationRoute -> NavEntry(key) {
+                        ReconciliationScreen(
+                            state = reconciliationState,
+                            onBack = { backStack.removeLastOrNull() },
+                            onPreviousDate = reconciliationViewModel::previousDate,
+                            onNextDate = reconciliationViewModel::nextDate,
+                            onToday = reconciliationViewModel::today,
+                            onRefresh = reconciliationViewModel::refresh,
+                            onOpen = reconciliationViewModel::open,
+                            onUpdateChannel = reconciliationViewModel::updateChannel,
+                            onSignOff = reconciliationViewModel::signOff,
+                            onCloseDay = reconciliationViewModel::closeDay,
                         )
                     }
                     CartRoute -> NavEntry(key) {
