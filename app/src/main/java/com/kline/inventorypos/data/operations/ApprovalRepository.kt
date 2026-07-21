@@ -71,7 +71,7 @@ private fun ApprovalRequestDto.toDomain(): ApprovalRequest {
     val threshold = firstNumber(policy, "threshold") ?: firstNumber(data, "threshold")
     val reason = firstText(data, "reason") ?: firstText(summary, "reason") ?: firstText(payload, "reason", "notes") ?: firstText(policy, "type")
     val reference = firstText(summary, "receipt_number", "reference_number", "sku") ?: firstText(payload, "reference_number", "sku", "barcode")
-    return ApprovalRequest(id, requestType, requestType.typeLabel(), requestedBy, requestedByName, createdAt, amount, threshold, reason, reference, flatten(data))
+    return ApprovalRequest(id, requestType, requestType.typeLabel(), requestedBy, requestedByName?.takeIf(String::isNotBlank) ?: "Unknown staff", createdAt, amount, threshold, reason, reference, flatten(data))
 }
 
 private fun flatten(root: JsonObject): List<ApprovalDetail> {

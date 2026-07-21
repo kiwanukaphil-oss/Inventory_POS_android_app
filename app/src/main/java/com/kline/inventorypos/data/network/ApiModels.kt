@@ -269,7 +269,7 @@ data class ApprovalRequestDto(
     val id: String,
     @SerializedName("request_type") val requestType: String,
     @SerializedName("requested_by") val requestedBy: String,
-    @SerializedName("requested_by_name") val requestedByName: String,
+    @SerializedName("requested_by_name") val requestedByName: String?,
     val status: String,
     @SerializedName("request_data") val requestData: JsonObject?,
     @SerializedName("created_at") val createdAt: String,
