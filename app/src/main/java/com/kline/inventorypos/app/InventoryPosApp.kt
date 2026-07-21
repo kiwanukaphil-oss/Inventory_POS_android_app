@@ -48,6 +48,8 @@ import com.kline.inventorypos.feature.operations.ApprovalScreen
 import com.kline.inventorypos.feature.operations.ApprovalViewModel
 import com.kline.inventorypos.feature.operations.ExpenseScreen
 import com.kline.inventorypos.feature.operations.ExpenseViewModel
+import com.kline.inventorypos.feature.document.DocumentScreen
+import com.kline.inventorypos.feature.document.DocumentViewModel
 import com.kline.inventorypos.feature.auth.BranchSelectionScreen
 import com.kline.inventorypos.feature.auth.LoginScreen
 import com.kline.inventorypos.feature.auth.OpenRegisterScreen
@@ -94,6 +96,7 @@ fun InventoryPosApp(
     reconciliationViewModel: ReconciliationViewModel,
     expenseViewModel: ExpenseViewModel,
     approvalViewModel: ApprovalViewModel,
+    documentViewModel: DocumentViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val stage = uiState.stage) {
@@ -131,6 +134,7 @@ fun InventoryPosApp(
             reconciliationViewModel = reconciliationViewModel,
             expenseViewModel = expenseViewModel,
             approvalViewModel = approvalViewModel,
+            documentViewModel = documentViewModel,
             onChangeBranch = viewModel::changeBranch,
             onOpenRegister = viewModel::requestRegister,
             onRegisterClosed = viewModel::registerClosed,
@@ -151,6 +155,7 @@ private fun AuthenticatedApp(
     reconciliationViewModel: ReconciliationViewModel,
     expenseViewModel: ExpenseViewModel,
     approvalViewModel: ApprovalViewModel,
+    documentViewModel: DocumentViewModel,
     onChangeBranch: () -> Unit,
     onOpenRegister: () -> Unit,
     onRegisterClosed: () -> Unit,
@@ -166,6 +171,7 @@ private fun AuthenticatedApp(
     val reconciliationState by reconciliationViewModel.uiState.collectAsStateWithLifecycle()
     val expenseState by expenseViewModel.uiState.collectAsStateWithLifecycle()
     val approvalState by approvalViewModel.uiState.collectAsStateWithLifecycle()
+    val documentState by documentViewModel.uiState.collectAsStateWithLifecycle()
     val latestSaleState = rememberUpdatedState(saleState)
     val backStack = remember { mutableStateListOf<Any>(HomeRoute) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -201,6 +207,9 @@ private fun AuthenticatedApp(
     LaunchedEffect(session.user.id, session.branch.id) { expenseViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id) {
         if (session.user.hasPermission("sales.approve")) approvalViewModel.bindSession(session)
+    }
+    LaunchedEffect(session.user.id, session.branch.id) {
+        if (session.user.hasPermission("documents.view")) documentViewModel.bindSession(session)
     }
     LaunchedEffect(saleState.message) {
         saleState.message?.let { message(it); saleViewModel.consumeMessage() }
@@ -261,6 +270,8 @@ private fun AuthenticatedApp(
     LaunchedEffect(approvalState.error) {
         approvalState.error?.let { message(it); approvalViewModel.clearError() }
     }
+    LaunchedEffect(documentState.message) { documentState.message?.let { message(it); documentViewModel.consumeMessage() } }
+    LaunchedEffect(documentState.error) { documentState.error?.let { message(it); documentViewModel.clearError() } }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -365,6 +376,7 @@ private fun AuthenticatedApp(
                             onReconciliation = { backStack.add(ReconciliationRoute) },
                             onExpenses = { backStack.add(ExpensesRoute) },
                             onApprovals = { backStack.add(ApprovalsRoute) },
+                            onDocuments = { backStack.add(DocumentsRoute) },
                         )
                     }
                     CustomersRoute -> NavEntry(key) {
@@ -455,6 +467,9 @@ private fun AuthenticatedApp(
                             onDecision = approvalViewModel::decide,
                             onVerified = approvalViewModel::acknowledgeVerified,
                         )
+                    }
+                    DocumentsRoute -> NavEntry(key) {
+                        DocumentScreen(documentState, { documentViewModel.close(); backStack.removeLastOrNull() }, documentViewModel::setType, documentViewModel::setStatus, documentViewModel::setQuery, documentViewModel::search, documentViewModel::refresh, documentViewModel::open, documentViewModel::close, documentViewModel::save, documentViewModel::transition, documentViewModel::void, documentViewModel::convert)
                     }
                     CartRoute -> NavEntry(key) {
                         val currentSale = latestSaleState.value

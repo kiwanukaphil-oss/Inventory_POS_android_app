@@ -107,6 +107,33 @@ interface InventoryPosApi {
     @POST("approvals/{id}/reject")
     suspend fun rejectRequest(@Path("id") id: String, @Body request: ApprovalDecisionRequest): ApiEnvelope<ApprovalRequestDto>
 
+    @GET("documents")
+    suspend fun businessDocuments(
+        @Query("type") type: String? = null,
+        @Query("status") status: String? = null,
+        @Query("search") search: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 50,
+    ): BusinessDocumentListResponse
+
+    @GET("documents/{id}")
+    suspend fun businessDocument(@Path("id") id: String): ApiEnvelope<BusinessDocumentDto>
+
+    @POST("documents")
+    suspend fun createBusinessDocument(@Body request: SaveBusinessDocumentRequest): ApiEnvelope<BusinessDocumentDto>
+
+    @PUT("documents/{id}")
+    suspend fun updateBusinessDocument(@Path("id") id: String, @Body request: SaveBusinessDocumentRequest): ApiEnvelope<BusinessDocumentDto>
+
+    @POST("documents/{id}/status")
+    suspend fun transitionBusinessDocument(@Path("id") id: String, @Body request: DocumentStatusRequest): ApiEnvelope<BusinessDocumentDto>
+
+    @POST("documents/{id}/void")
+    suspend fun voidBusinessDocument(@Path("id") id: String, @Body request: VoidDocumentRequest): ApiEnvelope<BusinessDocumentDto>
+
+    @POST("documents/{id}/convert")
+    suspend fun convertBusinessDocument(@Path("id") id: String, @Body request: ConvertDocumentRequest): ApiEnvelope<BusinessDocumentDto>
+
     @GET("products/variants")
     suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>>
 

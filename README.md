@@ -63,6 +63,12 @@ a dedicated approval queue for discount, cash, stock, price, and no-sale
 exceptions, including self-approval prevention, mandatory rejection reasons,
 full request evidence, and interrupted-decision safety locks.
 
+Business documents now provide branch-scoped quote, invoice, and corporate
+receipt search; touch-first manual document creation and draft editing; line
+item totals; validated status transitions; quote-to-invoice and
+invoice-to-receipt conversion; linked-document history; and permission-gated
+voiding with a mandatory reason.
+
 To connect a debug build to a backend running on this computer over USB:
 
 ```powershell

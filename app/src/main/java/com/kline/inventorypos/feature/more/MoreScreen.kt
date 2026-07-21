@@ -67,6 +67,7 @@ fun MoreScreen(
     onReconciliation: () -> Unit,
     onExpenses: () -> Unit,
     onApprovals: () -> Unit,
+    onDocuments: () -> Unit,
 ) {
     val groups = listOf(
         "Customers & growth" to listOf(
@@ -114,6 +115,7 @@ fun MoreScreen(
                                 else if (item.title == "End of day" || item.title == "Reports") onReconciliation()
                                 else if (item.title == "Expenses") onExpenses()
                                 else if (item.title == "Approvals") onApprovals()
+                                else if (item.title == "Business documents") onDocuments()
                                 else onMessage("${item.title} opens as a permission-aware workspace")
                             }
                             if (index != items.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 56.dp).background(Slate100).size(height = 1.dp, width = 340.dp))

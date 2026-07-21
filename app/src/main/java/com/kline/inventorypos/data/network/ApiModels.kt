@@ -277,6 +277,78 @@ data class ApprovalRequestDto(
 
 data class ApprovalDecisionRequest(@SerializedName("decision_notes") val decisionNotes: String)
 
+data class BusinessDocumentDto(
+    val id: String,
+    @SerializedName("document_type") val documentType: String,
+    @SerializedName("document_number") val documentNumber: String,
+    val status: String,
+    @SerializedName("customer_id") val customerId: String?,
+    @SerializedName("bill_to_name") val billToName: String,
+    @SerializedName("bill_to_address") val billToAddress: String?,
+    @SerializedName("document_date") val documentDate: String,
+    @SerializedName("valid_until") val validUntil: String?,
+    @SerializedName("due_date") val dueDate: String?,
+    @SerializedName("payment_method") val paymentMethod: String?,
+    @SerializedName("payment_reference") val paymentReference: String?,
+    val subtotal: Double,
+    val total: Double,
+    val currency: String?,
+    val notes: String?,
+    @SerializedName("source_document_number") val sourceDocumentNumber: String?,
+    @SerializedName("void_reason") val voidReason: String?,
+    @SerializedName("created_by_name") val createdByName: String?,
+    @SerializedName("created_at") val createdAt: String,
+    val items: List<BusinessDocumentItemDto>?,
+    @SerializedName("derived_documents") val derivedDocuments: List<DerivedDocumentDto>?,
+)
+
+data class BusinessDocumentItemDto(
+    val id: String,
+    val description: String,
+    val quantity: Double,
+    @SerializedName("unit_price") val unitPrice: Double,
+    @SerializedName("line_total") val lineTotal: Double,
+    @SerializedName("variant_id") val variantId: String?,
+)
+
+data class DerivedDocumentDto(
+    val id: String,
+    @SerializedName("document_type") val documentType: String,
+    @SerializedName("document_number") val documentNumber: String,
+    val status: String,
+)
+
+data class BusinessDocumentListResponse(val success: Boolean, val data: List<BusinessDocumentDto>, val pagination: PaginationDto?)
+
+data class BusinessDocumentItemRequest(
+    val description: String,
+    val quantity: Double,
+    @SerializedName("unit_price") val unitPrice: Long,
+    @SerializedName("variant_id") val variantId: String? = null,
+)
+
+data class SaveBusinessDocumentRequest(
+    @SerializedName("document_type") val documentType: String,
+    @SerializedName("bill_to_name") val billToName: String,
+    @SerializedName("bill_to_address") val billToAddress: String? = null,
+    @SerializedName("document_date") val documentDate: String,
+    @SerializedName("valid_until") val validUntil: String? = null,
+    @SerializedName("due_date") val dueDate: String? = null,
+    @SerializedName("payment_method") val paymentMethod: String? = null,
+    @SerializedName("payment_reference") val paymentReference: String? = null,
+    val notes: String? = null,
+    val items: List<BusinessDocumentItemRequest>,
+)
+
+data class DocumentStatusRequest(val status: String, val reason: String? = null)
+data class VoidDocumentRequest(val reason: String?)
+data class ConvertDocumentRequest(
+    @SerializedName("document_date") val documentDate: String,
+    @SerializedName("due_date") val dueDate: String? = null,
+    @SerializedName("payment_method") val paymentMethod: String? = null,
+    @SerializedName("payment_reference") val paymentReference: String? = null,
+)
+
 data class CatalogVariantDto(
     val id: String,
     val sku: String,

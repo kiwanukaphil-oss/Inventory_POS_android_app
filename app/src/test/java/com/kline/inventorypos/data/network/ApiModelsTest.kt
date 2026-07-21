@@ -223,6 +223,15 @@ class ApiModelsTest {
 
         assertEquals("{\"decision_notes\":\"Threshold evidence checked\"}", json)
     }
+
+    @Test
+    fun businessDocumentLineUsesServerAuthoritativePricingFields() {
+        val request = SaveBusinessDocumentRequest("quotation", "Acacia Ltd", null, "2026-07-21", items = listOf(BusinessDocumentItemRequest("Shirts", 10.0, 125_000)))
+        val json = Gson().toJson(request)
+        assertTrue(json.contains("\"document_type\":\"quotation\""))
+        assertTrue(json.contains("\"bill_to_name\":\"Acacia Ltd\""))
+        assertTrue(json.contains("\"unit_price\":125000"))
+    }
 }
 
 private data class CustomerPurchasesEnvelopeForTest(val success: Boolean, val data: CustomerPurchaseHistoryDto)

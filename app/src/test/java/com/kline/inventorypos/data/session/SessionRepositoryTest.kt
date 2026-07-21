@@ -54,6 +54,12 @@ import com.kline.inventorypos.data.network.ExpenseDto
 import com.kline.inventorypos.data.network.SaveExpenseRequest
 import com.kline.inventorypos.data.network.ApprovalRequestDto
 import com.kline.inventorypos.data.network.ApprovalDecisionRequest
+import com.kline.inventorypos.data.network.BusinessDocumentDto
+import com.kline.inventorypos.data.network.BusinessDocumentListResponse
+import com.kline.inventorypos.data.network.SaveBusinessDocumentRequest
+import com.kline.inventorypos.data.network.DocumentStatusRequest
+import com.kline.inventorypos.data.network.VoidDocumentRequest
+import com.kline.inventorypos.data.network.ConvertDocumentRequest
 import com.kline.inventorypos.data.network.DiscountDto
 import com.kline.inventorypos.data.network.HeldCartDto
 import com.kline.inventorypos.data.network.HoldCartRequest
@@ -167,6 +173,13 @@ private object NoNetworkApi : InventoryPosApi {
     override suspend fun pendingApprovals(): ApiEnvelope<List<ApprovalRequestDto>> = error("Network should not be used")
     override suspend fun approveRequest(id: String, request: ApprovalDecisionRequest): ApiEnvelope<ApprovalRequestDto> = error("Network should not be used")
     override suspend fun rejectRequest(id: String, request: ApprovalDecisionRequest): ApiEnvelope<ApprovalRequestDto> = error("Network should not be used")
+    override suspend fun businessDocuments(type: String?, status: String?, search: String?, page: Int, limit: Int): BusinessDocumentListResponse = error("Network should not be used")
+    override suspend fun businessDocument(id: String): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
+    override suspend fun createBusinessDocument(request: SaveBusinessDocumentRequest): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
+    override suspend fun updateBusinessDocument(id: String, request: SaveBusinessDocumentRequest): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
+    override suspend fun transitionBusinessDocument(id: String, request: DocumentStatusRequest): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
+    override suspend fun voidBusinessDocument(id: String, request: VoidDocumentRequest): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
+    override suspend fun convertBusinessDocument(id: String, request: ConvertDocumentRequest): ApiEnvelope<BusinessDocumentDto> = error("Network should not be used")
     override suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>> = error("Network should not be used")
     override suspend fun variantByBarcode(barcode: String): ApiEnvelope<CatalogVariantDto> = error("Network should not be used")
     override suspend fun categories(): ApiEnvelope<List<CategoryDto>> = error("Network should not be used")
