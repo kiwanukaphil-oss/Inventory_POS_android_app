@@ -6,6 +6,8 @@ import com.kline.inventorypos.core.model.BusinessDocument
 import com.kline.inventorypos.core.model.BusinessDocumentItem
 import com.kline.inventorypos.core.model.DerivedDocument
 import com.kline.inventorypos.core.model.DocumentDraftLine
+import com.kline.inventorypos.core.model.conversionTargetType
+import com.kline.inventorypos.core.model.requireConversionAllowed
 import com.kline.inventorypos.data.network.ApiError
 import com.kline.inventorypos.data.network.BusinessDocumentDto
 import com.kline.inventorypos.data.network.BusinessDocumentItemRequest
@@ -18,6 +20,8 @@ import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.math.roundToLong
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -46,6 +50,7 @@ class DefaultBusinessDocumentRepository(
     private val documentLogo: Bitmap? = null,
 ) : BusinessDocumentRepository {
     private val demo = mutableListOf(demoDocument("doc-1", "quotation", "QT-01042", "sent", "Acacia Facilities Ltd", 1_850_000), demoDocument("doc-2", "invoice", "INV-00482", "draft", "Nile Corporate Wear", 3_420_000))
+    private val conversionMutex = Mutex()
 
     override suspend fun list(type: String?, status: String?, search: String): List<BusinessDocument> {
         if (isDemo()) return demo.filter { (type == null || it.type == type) && (status == null || it.status == status) && (search.isBlank() || it.number.contains(search, true) || it.billToName.contains(search, true)) }
@@ -69,9 +74,41 @@ class DefaultBusinessDocumentRepository(
         change = { it.copy(status = status) },
     )
     override suspend fun void(id: String, reason: String): BusinessDocument { require(reason.trim().isNotBlank()) { "A void reason is required." }; return updateDemoOrLive(id, { mutate { api.voidBusinessDocument(id, VoidDocumentRequest(reason.trim())).data }.toDomain() }, { it.copy(status = "void", voidReason = reason.trim()) }) }
-    override suspend fun convert(id: String, paymentMethod: String?, paymentReference: String): BusinessDocument {
-        if (isDemo()) { val source = demo.first { it.id == id }; val target = if (source.type == "quotation") "invoice" else "receipt"; val created = source.copy(id = "doc-${UUID.randomUUID()}", type = target, number = "${target.take(3).uppercase()}-${1000 + demo.size}", status = if (target == "receipt") "issued" else "draft", sourceNumber = source.number, paymentMethod = paymentMethod, paymentReference = paymentReference.clean()); demo[demo.indexOf(source)] = source.copy(status = "converted", derived = listOf(DerivedDocument(created.id, target, created.number, created.status))); demo.add(0, created); return created }
-        return mutate { api.convertBusinessDocument(id, ConvertDocumentRequest(LocalDate.now().toString(), paymentMethod = paymentMethod, paymentReference = paymentReference.clean())).data }.toDomain()
+    override suspend fun convert(id: String, paymentMethod: String?, paymentReference: String): BusinessDocument = conversionMutex.withLock {
+        // Re-read inside the lock. A second rapid request then observes the first
+        // conversion's linked document instead of creating another target.
+        val source = detail(id)
+        source.requireConversionAllowed()
+        val target = requireNotNull(source.conversionTargetType())
+        if (isDemo()) {
+            val created = source.copy(
+                id = "doc-${UUID.randomUUID()}",
+                type = target,
+                number = "${target.take(3).uppercase()}-${1000 + demo.size}",
+                status = if (target == "receipt") "issued" else "draft",
+                sourceNumber = source.number,
+                paymentMethod = paymentMethod,
+                paymentReference = paymentReference.clean(),
+                derived = emptyList(),
+            )
+            demo[demo.indexOf(source)] = source.copy(
+                status = "converted",
+                derived = source.derived + DerivedDocument(created.id, target, created.number, created.status),
+            )
+            demo.add(0, created)
+            created
+        } else {
+            mutate {
+                api.convertBusinessDocument(
+                    id,
+                    ConvertDocumentRequest(
+                        LocalDate.now().toString(),
+                        paymentMethod = paymentMethod,
+                        paymentReference = paymentReference.clean(),
+                    ),
+                ).data
+            }.toDomain()
+        }
     }
 
     override suspend fun pdf(document: BusinessDocument): GeneratedDocumentPdf {

@@ -33,6 +33,8 @@ import com.kline.inventorypos.core.common.formatUgx
 import com.kline.inventorypos.core.designsystem.*
 import com.kline.inventorypos.core.model.BusinessDocument
 import com.kline.inventorypos.core.model.DocumentDraftLine
+import com.kline.inventorypos.core.model.canConvert
+import com.kline.inventorypos.core.model.conversionTargetType
 import com.kline.inventorypos.data.document.GeneratedDocumentPdf
 import java.io.File
 import java.time.LocalDate
@@ -88,6 +90,7 @@ private fun DocumentDetail(state: DocumentUiState, onBack: () -> Unit, onEdit: (
     val document = state.detail!!
     var convert by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(document.id) { convert = false }
     LaunchedEffect(state.message) { if (state.message?.contains("emailed to", ignoreCase = true) == true) email = false }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         FocusedHeader(document.number, "${document.type.label()} · ${document.status.label()}", onBack)
@@ -106,12 +109,19 @@ private fun DocumentDetail(state: DocumentUiState, onBack: () -> Unit, onEdit: (
                 }
                 if (document.status != "void" && state.canSend) Button({ email = true }, Modifier.fillMaxWidth(), enabled = !state.working && !state.uncertain) { Icon(Icons.Outlined.Email, null); Text("  Email PDF") }
                 nextStatuses(document).forEach { status -> OutlinedButton({ onTransition(document.id, status) }, Modifier.fillMaxWidth(), enabled = !state.working && !state.uncertain) { Text("Mark ${status.label()}") } }
-                if (document.type != "receipt" && document.status in setOf("draft", "sent", "accepted", "paid") && state.canCreate) Button({ convert = true }, Modifier.fillMaxWidth()) { Text("Convert to ${if (document.type == "quotation") "invoice" else "receipt"}") }
-                if (document.status != "void" && state.canVoid) TextButton({ onLifecycle("void") }, Modifier.fillMaxWidth()) { Text("Void document", color = Error700) }
+                val conversionTarget = document.conversionTargetType()
+                if (conversionTarget != null && document.canConvert() && state.canCreate) {
+                    Button(
+                        onClick = { convert = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.working && !state.uncertain,
+                    ) { Text("Convert to $conversionTarget") }
+                }
+                if (document.status !in setOf("converted", "void") && state.canVoid) TextButton({ onLifecycle("void") }, Modifier.fillMaxWidth()) { Text("Void document", color = Error700) }
             } }
         }
     }
-    if (convert) ConvertDialog(document.type == "invoice", { convert = false }) { method, reference -> onConvert(document.id, method, reference) }
+    if (convert) ConvertDialog(document.type == "invoice", state.working, { convert = false }) { method, reference -> onConvert(document.id, method, reference) }
     if (email) EmailDocumentDialog(document, state.working, { if (!state.working) email = false }) { to, cc, message -> onEmail(document, to, cc, message) }
 }
 
@@ -180,7 +190,50 @@ private fun DocumentEditor(state: DocumentUiState, document: BusinessDocument?, 
 internal fun upsertDocumentLine(lines: List<DocumentDraftLine>, index: Int?, line: DocumentDraftLine): List<DocumentDraftLine> =
     if (index == null || index !in lines.indices) lines + line else lines.toMutableList().apply { this[index] = line }
 
-@Composable private fun ConvertDialog(receipt:Boolean,onDismiss:()->Unit,onConfirm:(String?,String)->Unit){var method by remember{mutableStateOf(if(receipt)"cash" else "")};var ref by remember{mutableStateOf("")};AlertDialog(onDismissRequest=onDismiss,title={Text(if(receipt)"Create receipt" else "Create invoice")},text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){if(receipt){Text("Payment method");Choices(listOf("cash" to "Cash","mobile_money" to "Mobile money","bank" to "Bank","cheque" to "Cheque"),method){method=it};OutlinedTextField(ref,{ref=it.take(100)},label={Text("Payment reference (optional)")})}else Text("The quote’s client, line items, and totals will be copied into a new draft invoice.")}},confirmButton={Button({onConfirm(method.takeIf{it.isNotBlank()},ref)}){Text("Convert")}},dismissButton={TextButton(onDismiss){Text("Cancel")}})}
+@Composable
+private fun ConvertDialog(
+    receipt: Boolean,
+    working: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (String?, String) -> Unit,
+) {
+    var method by remember { mutableStateOf(if (receipt) "cash" else "") }
+    var reference by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = { if (!working) onDismiss() },
+        title = { Text(if (receipt) "Create receipt" else "Create invoice") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (receipt) {
+                    Text("This invoice can create one receipt. Once created, it will remain linked for matching and audit purposes.")
+                    Text("Payment method")
+                    Choices(
+                        listOf("cash" to "Cash", "mobile_money" to "Mobile money", "bank" to "Bank", "cheque" to "Cheque"),
+                        method,
+                    ) { method = it }
+                    OutlinedTextField(
+                        reference,
+                        { reference = it.take(100) },
+                        label = { Text("Payment reference (optional)") },
+                        enabled = !working,
+                    )
+                } else {
+                    Text("The quote’s client, line items, and totals will be copied into one linked draft invoice.")
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(method.takeIf(String::isNotBlank), reference) },
+                enabled = !working,
+            ) {
+                if (working) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                else Text(if (receipt) "Create receipt" else "Create invoice")
+            }
+        },
+        dismissButton = { TextButton(onDismiss, enabled = !working) { Text("Cancel") } },
+    )
+}
 @Composable private fun ReasonDialog(title:String,required:Boolean,onDismiss:()->Unit,onConfirm:(String)->Unit){var text by remember{mutableStateOf("")};AlertDialog(onDismissRequest=onDismiss,title={Text(title)},text={OutlinedTextField(text,{text=it.take(500)},label={Text("Reason")},minLines=3)},confirmButton={Button({onConfirm(text)},enabled=!required||text.isNotBlank()){Text("Confirm")}},dismissButton={TextButton(onDismiss){Text("Cancel")}})}
 @Composable private fun EmailDocumentDialog(document:BusinessDocument,working:Boolean,onDismiss:()->Unit,onConfirm:(String,List<String>,String)->Unit){var to by rememberSaveable{mutableStateOf(document.emailedTo?:document.customerEmail.orEmpty())};var cc by rememberSaveable{mutableStateOf(document.emailedCc.joinToString(", "))};var message by rememberSaveable{mutableStateOf("")};val copies=cc.split(',').map(String::trim).filter(String::isNotBlank);val valid=to.matches(Regex("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$",RegexOption.IGNORE_CASE))&&copies.size<=10&&copies.all{it.matches(Regex("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$",RegexOption.IGNORE_CASE))};AlertDialog(onDismissRequest=onDismiss,title={Text("Email ${document.number}")},text={Column(verticalArrangement=Arrangement.spacedBy(9.dp)){OutlinedTextField(to,{to=it.take(254)},Modifier.fillMaxWidth(),label={Text("Recipient email")},singleLine=true,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Email));OutlinedTextField(cc,{cc=it.take(1000)},Modifier.fillMaxWidth(),label={Text("CC (optional)")},supportingText={Text("Separate up to 10 addresses with commas")},minLines=2,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Email));OutlinedTextField(message,{message=it.take(1000)},Modifier.fillMaxWidth(),label={Text("Cover note (optional)")},minLines=3);Text("A crisp A4 PDF is generated on this device and attached securely.",color=Slate500,style=MaterialTheme.typography.bodySmall);if(document.status=="draft")Text("Sending will mark this draft as sent.",color=Primary700,style=MaterialTheme.typography.bodySmall,fontWeight=FontWeight.Bold)}},confirmButton={Button({onConfirm(to,copies,message)},enabled=valid&&!working){if(working)CircularProgressIndicator(Modifier.size(18.dp),strokeWidth=2.dp)else Text("Send PDF")}},dismissButton={TextButton(onDismiss,enabled=!working){Text("Cancel")}})}
 @Composable private fun <T> Choices(options:List<Pair<T,String>>,selected:T,onSelect:(T)->Unit){Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(7.dp)){options.forEach{(v,l)->FilterChip(selected==v,{onSelect(v)},{Text(l)})}}}
