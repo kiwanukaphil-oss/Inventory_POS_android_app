@@ -15,6 +15,8 @@ data object CustomersRoute
 data object GiftVouchersRoute
 data object CashRoute
 data object ReconciliationRoute
+data object ExpensesRoute
+data object ApprovalsRoute
 data object ReceiveStockRoute
 data object TransferStockRoute
 data object PriceManagementRoute

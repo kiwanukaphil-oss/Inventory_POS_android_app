@@ -231,6 +231,52 @@ data class PaymentMethodItemDto(
     @SerializedName("percentage_of_total") val percentageOfTotal: Double?,
 )
 
+data class ExpenseCategoryDto(
+    val id: String,
+    val name: String,
+    val description: String?,
+    @SerializedName("is_active") val isActive: Boolean,
+    @SerializedName("sort_order") val sortOrder: Int,
+)
+
+data class ExpenseDto(
+    val id: String,
+    @SerializedName("expense_date") val expenseDate: String,
+    @SerializedName("category_id") val categoryId: String,
+    @SerializedName("category_name") val categoryName: String?,
+    val amount: Double,
+    val payee: String?,
+    @SerializedName("payment_method") val paymentMethod: String,
+    val reference: String?,
+    val notes: String?,
+    @SerializedName("recorded_by") val recordedBy: String?,
+    @SerializedName("recorded_by_name") val recordedByName: String?,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("updated_at") val updatedAt: String,
+)
+
+data class SaveExpenseRequest(
+    @SerializedName("expense_date") val expenseDate: String,
+    @SerializedName("category_id") val categoryId: String,
+    val amount: Long,
+    val payee: String? = null,
+    @SerializedName("payment_method") val paymentMethod: String,
+    val reference: String? = null,
+    val notes: String? = null,
+)
+
+data class ApprovalRequestDto(
+    val id: String,
+    @SerializedName("request_type") val requestType: String,
+    @SerializedName("requested_by") val requestedBy: String,
+    @SerializedName("requested_by_name") val requestedByName: String,
+    val status: String,
+    @SerializedName("request_data") val requestData: JsonObject?,
+    @SerializedName("created_at") val createdAt: String,
+)
+
+data class ApprovalDecisionRequest(@SerializedName("decision_notes") val decisionNotes: String)
+
 data class CatalogVariantDto(
     val id: String,
     val sku: String,

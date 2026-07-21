@@ -49,6 +49,11 @@ import com.kline.inventorypos.data.network.UpdateReconciliationChannelRequest
 import com.kline.inventorypos.data.network.ReconciliationSignoffRequest
 import com.kline.inventorypos.data.network.DailySalesSummaryDto
 import com.kline.inventorypos.data.network.PaymentMethodReportDto
+import com.kline.inventorypos.data.network.ExpenseCategoryDto
+import com.kline.inventorypos.data.network.ExpenseDto
+import com.kline.inventorypos.data.network.SaveExpenseRequest
+import com.kline.inventorypos.data.network.ApprovalRequestDto
+import com.kline.inventorypos.data.network.ApprovalDecisionRequest
 import com.kline.inventorypos.data.network.DiscountDto
 import com.kline.inventorypos.data.network.HeldCartDto
 import com.kline.inventorypos.data.network.HoldCartRequest
@@ -154,6 +159,14 @@ private object NoNetworkApi : InventoryPosApi {
     override suspend fun closeReconciliation(date: String, body: Map<String, String>): ApiEnvelope<ReconciliationDto> = error("Network should not be used")
     override suspend fun dailySalesSummary(date: String): ApiEnvelope<DailySalesSummaryDto> = error("Network should not be used")
     override suspend fun paymentMethodReport(startDate: String, endDate: String): ApiEnvelope<PaymentMethodReportDto> = error("Network should not be used")
+    override suspend fun expenseCategories(): ApiEnvelope<List<ExpenseCategoryDto>> = error("Network should not be used")
+    override suspend fun expenses(from: String, to: String, categoryId: String?, limit: Int, offset: Int): ApiEnvelope<List<ExpenseDto>> = error("Network should not be used")
+    override suspend fun createExpense(request: SaveExpenseRequest): ApiEnvelope<ExpenseDto> = error("Network should not be used")
+    override suspend fun updateExpense(id: String, request: SaveExpenseRequest): ApiEnvelope<ExpenseDto> = error("Network should not be used")
+    override suspend fun deleteExpense(id: String): ApiEnvelope<Any> = error("Network should not be used")
+    override suspend fun pendingApprovals(): ApiEnvelope<List<ApprovalRequestDto>> = error("Network should not be used")
+    override suspend fun approveRequest(id: String, request: ApprovalDecisionRequest): ApiEnvelope<ApprovalRequestDto> = error("Network should not be used")
+    override suspend fun rejectRequest(id: String, request: ApprovalDecisionRequest): ApiEnvelope<ApprovalRequestDto> = error("Network should not be used")
     override suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>> = error("Network should not be used")
     override suspend fun variantByBarcode(barcode: String): ApiEnvelope<CatalogVariantDto> = error("Network should not be used")
     override suspend fun categories(): ApiEnvelope<List<CategoryDto>> = error("Network should not be used")

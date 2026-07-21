@@ -22,6 +22,8 @@ import com.kline.inventorypos.feature.customer.CustomerViewModel
 import com.kline.inventorypos.feature.voucher.GiftVoucherViewModel
 import com.kline.inventorypos.feature.cash.CashViewModel
 import com.kline.inventorypos.feature.reconciliation.ReconciliationViewModel
+import com.kline.inventorypos.feature.operations.ApprovalViewModel
+import com.kline.inventorypos.feature.operations.ExpenseViewModel
 import com.kline.inventorypos.core.model.ConfirmedReceipt
 import com.kline.inventorypos.core.model.LabelPrintItem
 import kotlinx.coroutines.delay
@@ -37,13 +39,15 @@ class MainActivity : ComponentActivity() {
     private val giftVoucherViewModel by viewModels<GiftVoucherViewModel> { GiftVoucherViewModel.Factory(appContainer) }
     private val cashViewModel by viewModels<CashViewModel> { CashViewModel.Factory(appContainer) }
     private val reconciliationViewModel by viewModels<ReconciliationViewModel> { ReconciliationViewModel.Factory(appContainer) }
+    private val expenseViewModel by viewModels<ExpenseViewModel> { ExpenseViewModel.Factory(appContainer) }
+    private val approvalViewModel by viewModels<ApprovalViewModel> { ApprovalViewModel.Factory(appContainer) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             InventoryPosTheme {
-                InventoryPosApp(appViewModel, saleViewModel, inventoryViewModel, activityViewModel, customerViewModel, giftVoucherViewModel, cashViewModel, reconciliationViewModel)
+                InventoryPosApp(appViewModel, saleViewModel, inventoryViewModel, activityViewModel, customerViewModel, giftVoucherViewModel, cashViewModel, reconciliationViewModel, expenseViewModel, approvalViewModel)
             }
         }
     }

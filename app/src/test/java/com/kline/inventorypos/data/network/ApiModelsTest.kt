@@ -206,6 +206,23 @@ class ApiModelsTest {
         assertTrue(json.contains("\"confirmed_total\":2850000"))
         assertTrue(json.contains("\"notes\":\"Shift reviewed\""))
     }
+
+    @Test
+    fun expenseWriteUsesExactLedgerContract() {
+        val json = Gson().toJson(SaveExpenseRequest("2026-07-21", "transport", 180_000, "City Rider", "cash", "PET-42", "Courier"))
+
+        assertTrue(json.contains("\"expense_date\":\"2026-07-21\""))
+        assertTrue(json.contains("\"category_id\":\"transport\""))
+        assertTrue(json.contains("\"payment_method\":\"cash\""))
+        assertTrue(json.contains("\"amount\":180000"))
+    }
+
+    @Test
+    fun approvalDecisionUsesDecisionNotesField() {
+        val json = Gson().toJson(ApprovalDecisionRequest("Threshold evidence checked"))
+
+        assertEquals("{\"decision_notes\":\"Threshold evidence checked\"}", json)
+    }
 }
 
 private data class CustomerPurchasesEnvelopeForTest(val success: Boolean, val data: CustomerPurchaseHistoryDto)

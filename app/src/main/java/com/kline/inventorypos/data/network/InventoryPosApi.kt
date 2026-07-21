@@ -77,6 +77,36 @@ interface InventoryPosApi {
     @GET("reports/sales/payment-methods")
     suspend fun paymentMethodReport(@Query("start_date") startDate: String, @Query("end_date") endDate: String): ApiEnvelope<PaymentMethodReportDto>
 
+    @GET("expense-categories")
+    suspend fun expenseCategories(): ApiEnvelope<List<ExpenseCategoryDto>>
+
+    @GET("expenses")
+    suspend fun expenses(
+        @Query("from") from: String,
+        @Query("to") to: String,
+        @Query("category_id") categoryId: String? = null,
+        @Query("limit") limit: Int = 100,
+        @Query("offset") offset: Int = 0,
+    ): ApiEnvelope<List<ExpenseDto>>
+
+    @POST("expenses")
+    suspend fun createExpense(@Body request: SaveExpenseRequest): ApiEnvelope<ExpenseDto>
+
+    @PUT("expenses/{id}")
+    suspend fun updateExpense(@Path("id") id: String, @Body request: SaveExpenseRequest): ApiEnvelope<ExpenseDto>
+
+    @DELETE("expenses/{id}")
+    suspend fun deleteExpense(@Path("id") id: String): ApiEnvelope<Any>
+
+    @GET("approvals/pending")
+    suspend fun pendingApprovals(): ApiEnvelope<List<ApprovalRequestDto>>
+
+    @POST("approvals/{id}/approve")
+    suspend fun approveRequest(@Path("id") id: String, @Body request: ApprovalDecisionRequest): ApiEnvelope<ApprovalRequestDto>
+
+    @POST("approvals/{id}/reject")
+    suspend fun rejectRequest(@Path("id") id: String, @Body request: ApprovalDecisionRequest): ApiEnvelope<ApprovalRequestDto>
+
     @GET("products/variants")
     suspend fun catalogVariants(): ApiEnvelope<List<CatalogVariantDto>>
 

@@ -17,7 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material.icons.outlined.Approval
 import androidx.compose.material.icons.outlined.BusinessCenter
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material.icons.outlined.Inventory2
@@ -63,6 +65,8 @@ fun MoreScreen(
     onGiftVouchers: () -> Unit,
     onCash: () -> Unit,
     onReconciliation: () -> Unit,
+    onExpenses: () -> Unit,
+    onApprovals: () -> Unit,
 ) {
     val groups = listOf(
         "Customers & growth" to listOf(
@@ -73,6 +77,8 @@ fun MoreScreen(
             MenuItem("Products & catalog", "Products, variants, brands and categories", Icons.Outlined.Inventory2, "products.view"),
             MenuItem("Cash book", "Movements, handover and Z report", Icons.Outlined.Payments, "cash.view", "sales.create"),
             MenuItem("End of day", "Channel counts, sign-off and daily close", Icons.Outlined.Assessment, "cash.view", "cash.reconcile"),
+            MenuItem("Expenses", "Operating costs and payment references", Icons.AutoMirrored.Outlined.ReceiptLong, "expenses.view"),
+            MenuItem("Approvals", "Review high-risk exception requests", Icons.Outlined.Approval, "sales.approve"),
             MenuItem("Business documents", "Quotes, invoices and receipts", Icons.Outlined.BusinessCenter, "documents.view"),
         ),
         "Insights & administration" to listOf(
@@ -106,6 +112,8 @@ fun MoreScreen(
                                 else if (item.title == "Gift vouchers") onGiftVouchers()
                                 else if (item.title == "Cash book") onCash()
                                 else if (item.title == "End of day" || item.title == "Reports") onReconciliation()
+                                else if (item.title == "Expenses") onExpenses()
+                                else if (item.title == "Approvals") onApprovals()
                                 else onMessage("${item.title} opens as a permission-aware workspace")
                             }
                             if (index != items.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 56.dp).background(Slate100).size(height = 1.dp, width = 340.dp))

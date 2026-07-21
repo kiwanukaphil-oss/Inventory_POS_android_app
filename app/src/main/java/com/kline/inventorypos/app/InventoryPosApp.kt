@@ -44,6 +44,10 @@ import com.kline.inventorypos.feature.cash.CashScreen
 import com.kline.inventorypos.feature.cash.CashViewModel
 import com.kline.inventorypos.feature.reconciliation.ReconciliationScreen
 import com.kline.inventorypos.feature.reconciliation.ReconciliationViewModel
+import com.kline.inventorypos.feature.operations.ApprovalScreen
+import com.kline.inventorypos.feature.operations.ApprovalViewModel
+import com.kline.inventorypos.feature.operations.ExpenseScreen
+import com.kline.inventorypos.feature.operations.ExpenseViewModel
 import com.kline.inventorypos.feature.auth.BranchSelectionScreen
 import com.kline.inventorypos.feature.auth.LoginScreen
 import com.kline.inventorypos.feature.auth.OpenRegisterScreen
@@ -88,6 +92,8 @@ fun InventoryPosApp(
     giftVoucherViewModel: GiftVoucherViewModel,
     cashViewModel: CashViewModel,
     reconciliationViewModel: ReconciliationViewModel,
+    expenseViewModel: ExpenseViewModel,
+    approvalViewModel: ApprovalViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     when (val stage = uiState.stage) {
@@ -123,6 +129,8 @@ fun InventoryPosApp(
             giftVoucherViewModel = giftVoucherViewModel,
             cashViewModel = cashViewModel,
             reconciliationViewModel = reconciliationViewModel,
+            expenseViewModel = expenseViewModel,
+            approvalViewModel = approvalViewModel,
             onChangeBranch = viewModel::changeBranch,
             onOpenRegister = viewModel::requestRegister,
             onRegisterClosed = viewModel::registerClosed,
@@ -141,6 +149,8 @@ private fun AuthenticatedApp(
     giftVoucherViewModel: GiftVoucherViewModel,
     cashViewModel: CashViewModel,
     reconciliationViewModel: ReconciliationViewModel,
+    expenseViewModel: ExpenseViewModel,
+    approvalViewModel: ApprovalViewModel,
     onChangeBranch: () -> Unit,
     onOpenRegister: () -> Unit,
     onRegisterClosed: () -> Unit,
@@ -154,6 +164,8 @@ private fun AuthenticatedApp(
     val voucherState by giftVoucherViewModel.uiState.collectAsStateWithLifecycle()
     val cashState by cashViewModel.uiState.collectAsStateWithLifecycle()
     val reconciliationState by reconciliationViewModel.uiState.collectAsStateWithLifecycle()
+    val expenseState by expenseViewModel.uiState.collectAsStateWithLifecycle()
+    val approvalState by approvalViewModel.uiState.collectAsStateWithLifecycle()
     val latestSaleState = rememberUpdatedState(saleState)
     val backStack = remember { mutableStateListOf<Any>(HomeRoute) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -186,6 +198,10 @@ private fun AuthenticatedApp(
     LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { giftVoucherViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id, session.register?.id) { cashViewModel.bindSession(session) }
     LaunchedEffect(session.user.id, session.branch.id) { reconciliationViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id) { expenseViewModel.bindSession(session) }
+    LaunchedEffect(session.user.id, session.branch.id) {
+        if (session.user.hasPermission("sales.approve")) approvalViewModel.bindSession(session)
+    }
     LaunchedEffect(saleState.message) {
         saleState.message?.let { message(it); saleViewModel.consumeMessage() }
     }
@@ -232,6 +248,18 @@ private fun AuthenticatedApp(
     }
     LaunchedEffect(reconciliationState.error) {
         reconciliationState.error?.let { message(it); reconciliationViewModel.clearError() }
+    }
+    LaunchedEffect(expenseState.message) {
+        expenseState.message?.let { message(it); expenseViewModel.consumeMessage() }
+    }
+    LaunchedEffect(expenseState.error) {
+        expenseState.error?.let { message(it); expenseViewModel.clearError() }
+    }
+    LaunchedEffect(approvalState.message) {
+        approvalState.message?.let { message(it); approvalViewModel.consumeMessage() }
+    }
+    LaunchedEffect(approvalState.error) {
+        approvalState.error?.let { message(it); approvalViewModel.clearError() }
     }
 
     Scaffold(
@@ -335,6 +363,8 @@ private fun AuthenticatedApp(
                             onGiftVouchers = { backStack.add(GiftVouchersRoute) },
                             onCash = { backStack.add(CashRoute) },
                             onReconciliation = { backStack.add(ReconciliationRoute) },
+                            onExpenses = { backStack.add(ExpensesRoute) },
+                            onApprovals = { backStack.add(ApprovalsRoute) },
                         )
                     }
                     CustomersRoute -> NavEntry(key) {
@@ -404,6 +434,26 @@ private fun AuthenticatedApp(
                             onUpdateChannel = reconciliationViewModel::updateChannel,
                             onSignOff = reconciliationViewModel::signOff,
                             onCloseDay = reconciliationViewModel::closeDay,
+                        )
+                    }
+                    ExpensesRoute -> NavEntry(key) {
+                        ExpenseScreen(
+                            state = expenseState,
+                            onBack = { backStack.removeLastOrNull() },
+                            onPeriod = expenseViewModel::setPeriod,
+                            onCategory = expenseViewModel::setCategory,
+                            onRefresh = expenseViewModel::refresh,
+                            onSave = expenseViewModel::save,
+                            onDelete = expenseViewModel::delete,
+                        )
+                    }
+                    ApprovalsRoute -> NavEntry(key) {
+                        ApprovalScreen(
+                            state = approvalState,
+                            onBack = { backStack.removeLastOrNull() },
+                            onRefresh = approvalViewModel::refresh,
+                            onDecision = approvalViewModel::decide,
+                            onVerified = approvalViewModel::acknowledgeVerified,
                         )
                     }
                     CartRoute -> NavEntry(key) {

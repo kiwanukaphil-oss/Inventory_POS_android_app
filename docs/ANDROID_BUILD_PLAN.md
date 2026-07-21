@@ -423,7 +423,7 @@ and every mutation is permission- and branch-correct.
 
 ### Phase 6 — Cash, management, and administration
 
-**Implementation status:** cash-management core and daily close slice complete on 21 July 2026.
+**Implementation status:** cash-management, daily close, expenses, and approvals slices complete on 21 July 2026.
 The Android cash workspace shows the permission-scoped active drawer and daily
 cash book, supports audited manual inflow/outflow requests, and implements blind
 drawer close plus atomic staff handover. Expected cash is never exposed before
@@ -436,8 +436,14 @@ sales and payment-channel reporting, channel verification, mandatory variance
 notes, self-only staff sign-off, a visible close-readiness checklist, and the
 permission-gated final day lock. All amounts and statuses come back from the
 backend reconciliation/report contracts; interrupted mutations remain locked
-until an explicit refresh. Broader period reports, documents, expenses, and
-administration remain in subsequent Phase 6 slices.
+until an explicit refresh. The branch operating-expense ledger adds
+period/category summaries plus permission-gated create, edit, and confirmed
+delete actions. The manager approval queue presents normalized request evidence
+for sale discounts, cash exceptions, stock adjustments, price changes, and
+no-sale requests; it prevents self-approval, requires rejection reasons, and
+locks ambiguous decisions until the affected business record is explicitly
+verified. Broader period reports, business documents, and administration remain
+in subsequent Phase 6 slices.
 
 **Deliverables**
 

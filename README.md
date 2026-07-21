@@ -57,6 +57,12 @@ adds daily sales and payment reporting, independent channel verification,
 mandatory variance notes, self-only staff sign-off, and manager-controlled day
 closure with explicit readiness checks.
 
+Phase 6 also includes a branch-scoped Expenses ledger with period/category
+filters and permission-gated create, edit, and delete workflows. Managers have
+a dedicated approval queue for discount, cash, stock, price, and no-sale
+exceptions, including self-approval prevention, mandatory rejection reasons,
+full request evidence, and interrupted-decision safety locks.
+
 To connect a debug build to a backend running on this computer over USB:
 
 ```powershell
