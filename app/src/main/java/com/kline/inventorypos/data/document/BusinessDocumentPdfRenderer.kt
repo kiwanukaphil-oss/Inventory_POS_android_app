@@ -47,9 +47,14 @@ object BusinessDocumentPdfRenderer {
             paint.color = Color.rgb(210, 210, 210)
             paint.strokeWidth = 1f
             canvas.drawLine(LEFT, 782f, RIGHT, 782f, paint)
-            val contact = listOfNotNull(store.phone?.takeIf(String::isNotBlank), store.email?.takeIf(String::isNotBlank)).joinToString(" · ")
-            text("For clarification or queries${if (contact.isBlank()) "" else ": $contact"}", LEFT, 800f, 8.5f, color = Color.DKGRAY)
-            right("Page $pageNumber", RIGHT, 800f, 8.5f)
+            text(
+                "For clarification/queries, please call +256 777 466 979 or email klinedesignltd@gmail.com",
+                LEFT,
+                800f,
+                8.5f,
+                color = Color.DKGRAY,
+            )
+            right("Page $pageNumber", RIGHT, 818f, 8.5f)
         }
         fun finishPage() {
             if (document.status == "void") {
