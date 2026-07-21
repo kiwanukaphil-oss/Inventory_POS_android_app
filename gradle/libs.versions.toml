@@ -1,7 +1,7 @@
 [versions]
 agp = "8.13.2"
 kotlin = "2.3.21"
-composeBom = "2026.06.00"
+composeBom = "2026.06.01"
 activity = "1.13.0"
 core = "1.18.0"
 lifecycle = "2.10.0"
@@ -9,6 +9,8 @@ navigation3 = "1.1.4"
 datastore = "1.2.1"
 retrofit = "3.0.0"
 room = "2.8.4"
+profileInstaller = "1.4.1"
+serialization = "1.8.1"
 ksp = "2.3.10"
 codeScanner = "16.1.0"
 junit4 = "4.13.2"
@@ -36,6 +38,9 @@ retrofit-converter-gson = { module = "com.squareup.retrofit2:converter-gson", ve
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileInstaller" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 google-code-scanner = { module = "com.google.android.gms:play-services-code-scanner", version.ref = "codeScanner" }
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidxJunit" }

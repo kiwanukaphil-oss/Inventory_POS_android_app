@@ -1,0 +1,15 @@
+Lcom/kline/inventorypos/InventoryPosApplication;
+Lcom/kline/inventorypos/MainActivity;
+Lcom/kline/inventorypos/app/**;
+Lcom/kline/inventorypos/core/common/**;
+Lcom/kline/inventorypos/core/designsystem/**;
+Lcom/kline/inventorypos/core/session/**;
+Lcom/kline/inventorypos/data/catalog/**;
+Lcom/kline/inventorypos/data/checkout/**;
+Lcom/kline/inventorypos/data/local/**;
+Lcom/kline/inventorypos/data/session/**;
+Lcom/kline/inventorypos/data/sale/**;
+Lcom/kline/inventorypos/feature/auth/**;
+Lcom/kline/inventorypos/feature/home/**;
+Lcom/kline/inventorypos/feature/pos/**;
+Lcom/kline/inventorypos/feature/inventory/**;

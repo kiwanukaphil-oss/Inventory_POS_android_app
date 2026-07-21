@@ -29,7 +29,7 @@ abstract class InventoryPosDatabase : RoomDatabase() {
             "inventory_pos.db",
         ).addMigrations(Migration1To2).build()
 
-        private val Migration1To2 = object : Migration(1, 2) {
+        val Migration1To2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     """CREATE TABLE IF NOT EXISTS `checkout_attempts` (

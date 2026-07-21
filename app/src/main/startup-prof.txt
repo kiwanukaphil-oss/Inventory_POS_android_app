@@ -1,0 +1,7 @@
+Lcom/kline/inventorypos/InventoryPosApplication;
+Lcom/kline/inventorypos/MainActivity;
+Lcom/kline/inventorypos/app/**;
+Lcom/kline/inventorypos/core/session/**;
+Lcom/kline/inventorypos/data/session/**;
+Lcom/kline/inventorypos/feature/auth/**;
+Lcom/kline/inventorypos/feature/home/**;
