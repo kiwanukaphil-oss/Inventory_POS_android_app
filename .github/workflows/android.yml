@@ -22,7 +22,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
       - name: Verify debug and minified staging builds
@@ -46,7 +46,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@v6.2.0
       - name: Prepare Gradle wrapper
         run: chmod +x gradlew
       - name: Enable KVM for the Android emulator
